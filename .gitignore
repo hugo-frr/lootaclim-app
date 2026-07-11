@@ -1,0 +1,17 @@
+# Dépendances
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Base de données locale
+prisma/dev.db
+prisma/dev.db-journal
+
+# Environnement
+.env
+.env*.local
+
+# macOS
+.DS_Store

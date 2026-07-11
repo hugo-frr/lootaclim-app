@@ -1,0 +1,110 @@
+// LOOTACLIM — Schéma de base de données
+// Base locale : SQLite (fichier dev.db). En production on passera sur PostgreSQL
+// en changeant uniquement le "datasource" ci-dessous.
+//
+// NOTE : SQLite ne supporte pas les enums Prisma, on utilise donc des String
+// avec des valeurs conventionnelles documentées (voir lib/constants.js).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Un MODÈLE de climatiseur (ex : RIVOLI)
+model Product {
+  id          String         @id @default(cuid())
+  slug        String         @unique // "rivoli"
+  name        String // "RIVOLI"
+  description String
+  powerKw     Float // 2.9
+  noiseDb     Int // 46
+  maxAreaM2   Int // 35
+  dailyPrice  Int // en CENTIMES : 1800 = 18,00 €
+  active      Boolean        @default(true)
+  images      ProductImage[]
+  units       Unit[]
+  createdAt   DateTime       @default(now())
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String // /images/rivoli-1.jpg ou URL Cloudinary plus tard
+  alt       String
+  position  Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+}
+
+// Un climatiseur PHYSIQUE (un exemplaire réel de votre stock)
+model Unit {
+  id           String    @id @default(cuid())
+  serialNumber String    @unique
+  status       String    @default("AVAILABLE") // AVAILABLE | RENTED | IN_TRANSIT | MAINTENANCE | RETIRED
+  notes        String? // "rayure capot arrière", etc.
+  product      Product   @relation(fields: [productId], references: [id])
+  productId    String
+  bookings     Booking[]
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  firstName     String
+  lastName      String
+  phone         String
+  internalNotes String? // visible uniquement en back-office
+  addresses     Address[]
+  bookings      Booking[]
+  createdAt     DateTime  @default(now())
+}
+
+model Address {
+  id         String    @id @default(cuid())
+  line1      String
+  zip        String
+  city       String
+  floor      String    @default("rdc") // "rdc" | "asc" | "esc"
+  accessCode String?
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  bookings   Booking[]
+}
+
+model Booking {
+  id          String     @id @default(cuid())
+  reference   String     @unique // "LC-2026-0001"
+  customer    Customer   @relation(fields: [customerId], references: [id])
+  customerId  String
+  address     Address    @relation(fields: [addressId], references: [id])
+  addressId   String
+  unit        Unit?      @relation(fields: [unitId], references: [id])
+  unitId      String? // affectée en back-office avant livraison
+  startDate   DateTime
+  endDate     DateTime
+  status      String     @default("PENDING") // PENDING | CONFIRMED | DELIVERED | RETURNED | CANCELLED
+  subtotal    Int // centimes
+  discount    Int        @default(0)
+  deliveryFee Int        @default(2900)
+  floorFee    Int        @default(0)
+  total       Int
+  depositId   String? // empreinte de caution Stripe (plus tard)
+  paymentId   String? // paiement Stripe (plus tard)
+  deliveries  Delivery[]
+  createdAt   DateTime   @default(now())
+}
+
+// Une livraison OU une reprise
+model Delivery {
+  id        String   @id @default(cuid())
+  type      String // DROPOFF (livraison) | PICKUP (reprise)
+  date      DateTime
+  timeSlot  String // "9h-12h" | "14h-18h"
+  status    String   @default("SCHEDULED") // SCHEDULED | IN_PROGRESS | DONE | FAILED
+  proofUrl  String? // photo/signature (plus tard)
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String
+}
