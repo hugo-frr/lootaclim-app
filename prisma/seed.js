@@ -2,7 +2,8 @@
 // d'exemple, un client et une réservation de démonstration.
 // Lancer avec : npm run db:seed
 
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 async function main() {
