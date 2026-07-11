@@ -709,6 +709,11 @@ test("code postal hors zone refusé", () => {
   assert.match(validateBookingForm({ ...VALID, zip: "77100" }, NOW).error, /petite couronne/);
 });
 
+test("étage inconnu refusé (y compris les clés héritées d'Object)", () => {
+  assert.match(validateBookingForm({ ...VALID, floor: "cave" }, NOW).error, /étage/);
+  assert.match(validateBookingForm({ ...VALID, floor: "toString" }, NOW).error, /étage/);
+});
+
 test("créneau inconnu refusé", () => {
   assert.match(
     validateBookingForm({ ...VALID, deliverySlot: "9h-12h" }, NOW).error,
@@ -804,7 +809,7 @@ export function validateBookingForm(fields, now) {
       error: "Nous livrons Paris et la petite couronne (codes postaux 75, 92, 93, 94).",
     };
   }
-  if (!(clean.floor in FLOOR_LABELS)) return { error: "Merci de choisir un étage." };
+  if (!Object.hasOwn(FLOOR_LABELS, clean.floor)) return { error: "Merci de choisir un étage." };
 
   const delivery = TIME_SLOTS.find((s) => s.id === clean.deliverySlot);
   const pickup = TIME_SLOTS.find((s) => s.id === clean.pickupSlot);
@@ -827,7 +832,7 @@ export function validateBookingForm(fields, now) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `npm test`
-Expected: tous les tests des 4 fichiers passent (`pass 34`, `fail 0`).
+Expected: tous les tests des 4 fichiers passent (`pass 35`, `fail 0`).
 
 - [ ] **Step 5 : Commit**
 
