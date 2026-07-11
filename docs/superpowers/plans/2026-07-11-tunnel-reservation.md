@@ -525,6 +525,39 @@ test("pickupSlotsFor : location d'un jour → reprise après la livraison", () =
   assert.deepEqual(ids, ["16h-18h", "18h-20h", "20h-22h"]);
   assert.equal(pickupSlotsFor("2026-07-11", "2026-07-13", "14h-16h").length, 6);
 });
+
+test("fullDays : une réservation déjà en cours compte depuis le début de l'horizon", () => {
+  const bookings = [
+    { startDay: "2026-07-05", endDay: "2026-07-15", status: "DELIVERED" },
+  ];
+  const full = fullDays(bookings, 1, "2026-07-11", "2026-07-31");
+  assert.ok(full.has("2026-07-11"));
+  assert.ok(full.has("2026-07-16")); // battement
+  assert.ok(!full.has("2026-07-17"));
+  assert.ok(!full.has("2026-07-10")); // hors horizon
+});
+
+test("fullDays : le battement d'une location finie hier bloque aujourd'hui", () => {
+  const bookings = [
+    { startDay: "2026-07-05", endDay: "2026-07-10", status: "DELIVERED" },
+  ];
+  const full = fullDays(bookings, 1, "2026-07-11", "2026-07-31");
+  assert.deepEqual([...full], ["2026-07-11"]);
+});
+
+test("fullDays : une réservation entièrement passée ne compte pas", () => {
+  const bookings = [
+    { startDay: "2026-07-02", endDay: "2026-07-06", status: "DELIVERED" },
+  ];
+  assert.equal(fullDays(bookings, 1, "2026-07-11", "2026-07-31").size, 0);
+});
+
+test("deliverySlotsFor : un jour déjà passé n'a aucun créneau", () => {
+  assert.equal(
+    deliverySlotsFor("2026-07-10", { day: "2026-07-11", hour: 8 }).length,
+    0
+  );
+});
 ```
 
 - [ ] **Step 2 : Vérifier que les tests échouent**
@@ -588,6 +621,7 @@ export function rangeError(startDay, endDay, full, minDay, maxDay) {
 // Créneaux de livraison proposables pour un jour de début donné.
 // Le jour même, un créneau déjà commencé n'est plus proposé.
 export function deliverySlotsFor(startDay, now) {
+  if (startDay < now.day) return []; // jour déjà passé : aucun créneau
   if (startDay > now.day) return TIME_SLOTS;
   return TIME_SLOTS.filter((s) => now.hour < s.startHour);
 }
@@ -610,7 +644,7 @@ export function pickupSlotsFor(startDay, endDay, deliverySlotId) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `node --test lib/availability.test.js`
-Expected: `pass 10`, `fail 0`.
+Expected: `pass 14`, `fail 0`.
 
 - [ ] **Step 5 : Commit**
 
@@ -793,7 +827,7 @@ export function validateBookingForm(fields, now) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `npm test`
-Expected: tous les tests des 4 fichiers passent (`pass 30`, `fail 0`).
+Expected: tous les tests des 4 fichiers passent (`pass 34`, `fail 0`).
 
 - [ ] **Step 5 : Commit**
 
