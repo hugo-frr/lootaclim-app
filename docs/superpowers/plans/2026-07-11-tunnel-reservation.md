@@ -697,6 +697,22 @@ test("champ obligatoire manquant", () => {
   assert.match(validateBookingForm({ ...VALID, email: "  " }, NOW).error, /email/);
 });
 
+test("date inexistante au calendrier refusée", () => {
+  const r = validateBookingForm(
+    { ...VALID, startDay: "2026-09-31", endDay: "2026-09-31" },
+    NOW
+  );
+  assert.match(r.error, /dates/);
+});
+
+test("fin avant début et champ anormalement long refusés", () => {
+  assert.match(validateBookingForm({ ...VALID, endDay: "2026-07-14" }, NOW).error, /dates/);
+  assert.match(
+    validateBookingForm({ ...VALID, firstName: "a".repeat(201) }, NOW).error,
+    /long/
+  );
+});
+
 test("email invalide", () => {
   assert.match(validateBookingForm({ ...VALID, email: "pas-un-email" }, NOW).error, /email/);
 });
@@ -742,6 +758,19 @@ test("location d'un jour : reprise avant la livraison refusée", () => {
   );
   assert.match(r.error, /après la livraison/);
 });
+
+test("reprise au même créneau refusée pour 1 jour ; reprise matinale ok sur plusieurs jours", () => {
+  const same = validateBookingForm(
+    { ...VALID, startDay: "2026-07-15", endDay: "2026-07-15", deliverySlot: "14h-16h", pickupSlot: "14h-16h" },
+    NOW
+  );
+  assert.match(same.error, /après la livraison/);
+  const multi = validateBookingForm(
+    { ...VALID, deliverySlot: "16h-18h", pickupSlot: "9h-11h" },
+    NOW
+  );
+  assert.equal(multi.error, undefined);
+});
 ```
 
 - [ ] **Step 2 : Vérifier que les tests échouent**
@@ -757,6 +786,7 @@ Expected: FAIL avec `ERR_MODULE_NOT_FOUND` sur `lib/validation.js`.
 // tout est réellement vérifié.
 
 import { TIME_SLOTS, DELIVERY_ZONES, FLOOR_LABELS } from "./constants.js";
+import { addDays } from "./dates.js";
 
 const FIELDS = [
   "startDay",
@@ -778,7 +808,10 @@ const FIELDS = [
 // now : { day, hour } (heure de Paris), pour la règle du créneau commencé.
 export function validateBookingForm(fields, now) {
   const clean = {};
-  for (const key of FIELDS) clean[key] = String(fields[key] ?? "").trim();
+  for (const key of FIELDS) {
+    clean[key] = String(fields[key] ?? "").trim();
+    if (clean[key].length > 200) return { error: "Un des champs est anormalement long." };
+  }
 
   const required = {
     firstName: "le prénom",
@@ -793,7 +826,9 @@ export function validateBookingForm(fields, now) {
     if (!clean[key]) return { error: `Merci de renseigner ${label}.` };
   }
 
-  const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+  // Forme AAAA-MM-JJ ET date réellement existante (rejette le 31 septembre :
+  // addDays(v, 0) normalise, donc une date invalide ne revient pas identique)
+  const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v) && addDays(v, 0) === v;
   if (!isDay(clean.startDay) || !isDay(clean.endDay) || clean.endDay < clean.startDay) {
     return { error: "Merci de choisir vos dates sur le calendrier." };
   }
@@ -806,7 +841,7 @@ export function validateBookingForm(fields, now) {
   }
   if (!/^\d{5}$/.test(clean.zip) || !DELIVERY_ZONES.some((z) => clean.zip.startsWith(z))) {
     return {
-      error: "Nous livrons Paris et la petite couronne (codes postaux 75, 92, 93, 94).",
+      error: `Nous livrons Paris et la petite couronne (codes postaux ${DELIVERY_ZONES.join(", ")}).`,
     };
   }
   if (!Object.hasOwn(FLOOR_LABELS, clean.floor)) return { error: "Merci de choisir un étage." };
@@ -832,7 +867,7 @@ export function validateBookingForm(fields, now) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `npm test`
-Expected: tous les tests des 4 fichiers passent (`pass 35`, `fail 0`).
+Expected: tous les tests des 4 fichiers passent (`pass 38`, `fail 0`).
 
 - [ ] **Step 5 : Commit**
 
