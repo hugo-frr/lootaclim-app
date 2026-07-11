@@ -19,9 +19,9 @@ l'authentification et la validation en back-office à l'étape 3.
 | Durée minimale | 1 jour. |
 | Battement logistique | 1 jour bloqué entre deux locations d'une même machine. |
 | Entrée dans le tunnel | Bouton « Réserver » sur chaque carte du catalogue → `/reserver/[slug]`. |
-| Créneaux livraison/reprise | Créneaux de 2 h : `9h-11h`, `11h-13h`, `14h-16h`, `16h-18h`. |
+| Créneaux livraison/reprise | Créneaux de 2 h : `9h-11h`, `11h-13h`, `14h-16h`, `16h-18h`, `18h-20h`, `20h-22h`. |
 | Zone de livraison | Paris + petite couronne : codes postaux commençant par 75, 92, 93 ou 94. |
-| Horizon de réservation | Au plus tôt demain (pas de livraison le jour même), au plus tard J+3 mois. |
+| Horizon de réservation | Livraison possible le jour même, sauf sur un créneau déjà commencé. Au plus tard J+3 mois. |
 | Architecture | Server Components + Server Actions (pas de routes API). Calendrier maison, zéro dépendance UI ajoutée. |
 
 ## 1. Changement de schéma
@@ -35,8 +35,9 @@ back-office avant livraison). Une demande `PENDING` sans machine affectée ne pe
 - Migration Prisma ; la base locale ne contient que des données de démo →
   `prisma migrate reset` + seed mis à jour (la réservation de démo reçoit son
   `productId`, ses créneaux passent au format 2 h).
-- `lib/constants.js` : ajout de `TIME_SLOTS` (les 4 créneaux) et `DELIVERY_ZONES`
-  (préfixes de codes postaux autorisés).
+- `lib/constants.js` : ajout de `TIME_SLOTS` (les 6 créneaux, avec leur heure de
+  début pour la règle du jour même) et `DELIVERY_ZONES` (préfixes de codes postaux
+  autorisés).
 
 ## 2. Disponibilité — `lib/availability.js` (fonctions pures)
 
@@ -53,7 +54,15 @@ testables directement.
   jour de battement, ce qui garantit un jour de creux dans les deux sens.
 - **Jour complet** : jour où le nombre de réservations qui l'occupent ≥ capacité.
 - **Plage réservable** `[début, fin]` : aucun jour de `[début, fin + 1]` n'est
-  complet, `début ≥ demain`, `fin ≤ J+3 mois`.
+  complet, `début ≥ aujourd'hui`, `fin ≤ J+3 mois`.
+- **Livraison le jour même** : le début peut être aujourd'hui si au moins un
+  créneau de livraison n'a pas encore commencé (ex. à 14h30, les créneaux
+  `16h-18h`, `18h-20h` et `20h-22h` restent proposés ; le créneau `14h-16h`,
+  déjà commencé, est exclu). Après 20h, plus aucun créneau : le premier jour
+  réservable devient demain. Le sélecteur de créneau filtre en conséquence quand
+  la date de début est aujourd'hui, et le serveur re-vérifie (heure de Paris).
+- **Réservation d'un seul jour commençant et finissant le même jour** : le
+  créneau de reprise doit être strictement postérieur au créneau de livraison.
 - Le serveur calcule l'ensemble des jours complets sur l'horizon (+ 1 jour pour le
   battement de fin d'horizon) et le passe au composant client.
 
@@ -97,8 +106,10 @@ Entrées : prix/jour en centimes, dates de début et fin. Sortie : devis
 
 1. **Validation serveur** (les contrôles client ne sont qu'un confort) : dates dans
    l'horizon, plage cohérente, email/téléphone plausibles, code postal en zone,
-   créneaux dans `TIME_SLOTS`, étage dans les valeurs connues. Messages d'erreur
-   en français renvoyés au formulaire.
+   créneaux dans `TIME_SLOTS`, étage dans les valeurs connues ; si le début est
+   aujourd'hui, créneau de livraison pas encore commencé (heure de Paris) ; si
+   début = fin, créneau de reprise postérieur à celui de livraison. Messages
+   d'erreur en français renvoyés au formulaire.
 2. **Transaction Prisma** :
    - re-lecture des réservations du modèle et re-vérification de la disponibilité
      (protection contre deux clients réservant la dernière machine en même temps) ;
@@ -127,7 +138,8 @@ la pastille « En attente » ; les boutons de confirmation arrivent à l'étape 
 - `npm test` → `node --test` (rien à installer).
 - `lib/availability.test.js` : capacité (statuts exclus), occupation avec battement,
   chevauchements partiels, jour complet, plage traversant un jour complet, bornes
-  demain/J+3 mois.
+  aujourd'hui/J+3 mois, créneaux restants le jour même (avant 9h, en cours de
+  créneau, après 20h), ordre livraison/reprise quand début = fin.
 - `lib/pricing.test.js` : 1 jour, 6/7 jours (seuil −15 %), 29/30 jours (seuil −30 %),
   arrondis en centimes, total.
 - La logique métier étant pure, la Server Action reste une fine couche
