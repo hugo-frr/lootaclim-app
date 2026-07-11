@@ -3,6 +3,7 @@
 // Lancer avec : npm run db:seed
 
 import { PrismaClient } from "@prisma/client";
+import { addDays, nowInParis } from "../lib/dates.js";
 
 const prisma = new PrismaClient();
 
@@ -98,22 +99,22 @@ async function main() {
   });
 
   const firstUnit = await prisma.unit.findFirst({ where: { productId: rivoli.id } });
-  const start = new Date();
-  start.setDate(start.getDate() + 2);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 7);
+  const today = nowInParis().day;
+  const startDay = addDays(today, 2);
+  const endDay = addDays(startDay, 6); // 7 jours inclusifs
 
   const subtotal = 1800 * 7;
   const discount = Math.round(subtotal * 0.15); // -15 % dès 7 jours
 
   await prisma.booking.create({
     data: {
-      reference: "LC-2026-0001",
+      reference: `LC-${today.slice(0, 4)}-0001`,
       customerId: client.id,
       addressId: client.addresses[0].id,
+      productId: rivoli.id,
       unitId: firstUnit.id,
-      startDate: start,
-      endDate: end,
+      startDate: new Date(startDay),
+      endDate: new Date(endDay),
       status: "CONFIRMED",
       subtotal,
       discount,
@@ -122,14 +123,14 @@ async function main() {
       total: subtotal - discount + 2900,
       deliveries: {
         create: [
-          { type: "DROPOFF", date: start, timeSlot: "9h-12h" },
-          { type: "PICKUP", date: end, timeSlot: "14h-18h" },
+          { type: "DROPOFF", date: new Date(startDay), timeSlot: "9h-11h" },
+          { type: "PICKUP", date: new Date(endDay), timeSlot: "14h-16h" },
         ],
       },
     },
   });
 
-  console.log("✅ Base remplie : 3 modèles, 8 unités, 1 client, 1 réservation (LC-2026-0001)");
+  console.log("✅ Base remplie : 3 modèles, 8 unités, 1 client, 1 réservation (LC-…-0001)");
 }
 
 main()

@@ -27,6 +27,7 @@ model Product {
   active      Boolean        @default(true)
   images      ProductImage[]
   units       Unit[]
+  bookings    Booking[]
   createdAt   DateTime       @default(now())
 }
 
@@ -81,6 +82,10 @@ model Booking {
   customerId  String
   address     Address    @relation(fields: [addressId], references: [id])
   addressId   String
+  // Le MODÈLE réservé. La machine physique (unit) est affectée plus tard en
+  // back-office ; c'est ce lien qui permet de bloquer le bon calendrier.
+  product     Product    @relation(fields: [productId], references: [id])
+  productId   String
   unit        Unit?      @relation(fields: [unitId], references: [id])
   unitId      String? // affectée en back-office avant livraison
   startDate   DateTime
