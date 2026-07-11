@@ -188,6 +188,11 @@ test("addMonths ajoute des mois civils", () => {
   assert.equal(addMonths("2026-11-15", 3), "2027-02-15");
 });
 
+test("addMonths se cale sur la fin du mois quand le jour n'existe pas", () => {
+  assert.equal(addMonths("2026-01-31", 3), "2026-04-30");
+  assert.equal(addMonths("2026-11-30", 3), "2027-02-28");
+});
+
 test("eachDay liste les jours inclusivement", () => {
   assert.deepEqual(eachDay("2026-07-30", "2026-08-01"), [
     "2026-07-30",
@@ -232,9 +237,14 @@ export function addDays(day, n) {
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
+// Ajoute des mois civils en se calant sur la fin du mois si le jour
+// n'existe pas dans le mois cible : 31 janv. + 3 mois → 30 avril.
 export function addMonths(day, n) {
   const [y, m, d] = day.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1 + n, d)).toISOString().slice(0, 10);
+  const lastDay = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, lastDay)))
+    .toISOString()
+    .slice(0, 10);
 }
 
 // Liste des jours de start à end inclus (vide si end < start)
@@ -279,7 +289,7 @@ export function toDay(date) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `node --test lib/dates.test.js`
-Expected: `pass 6`, `fail 0`.
+Expected: `pass 7`, `fail 0`.
 
 - [ ] **Step 5 : Commit**
 
@@ -783,7 +793,7 @@ export function validateBookingForm(fields, now) {
 - [ ] **Step 4 : Vérifier que les tests passent**
 
 Run: `npm test`
-Expected: tous les tests des 4 fichiers passent (`pass 29`, `fail 0`).
+Expected: tous les tests des 4 fichiers passent (`pass 30`, `fail 0`).
 
 - [ ] **Step 5 : Commit**
 
