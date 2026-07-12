@@ -1206,6 +1206,16 @@ export async function createBooking(prevState, formData) {
 
 Note : `redirect()` est appelé **hors** du `try/catch` — il fonctionne en levant une exception interne à Next.js qu'il ne faut pas intercepter.
 
+> **Mise à jour post-revue (commit 56eafaa)** — le code ci-dessus a été durci après
+> revue : transaction en `isolationLevel: "Serializable"` + retry sur P2034
+> (indispensable pour le futur passage à PostgreSQL), messages d'indisponibilité
+> précis via une classe `BookingError` (le message de `rangeError` remonte au
+> client au lieu d'être jeté), référence dérivée du **max** des références de
+> l'année (un comptage se désynchronise si une ligne est supprimée), et constante
+> unique `ATTEMPTS`. Le fichier committé fait foi.
+> Reportés volontairement : anti-abus et vérification d'email (étapes 3-5,
+> bloquants avant toute mise en ligne publique), `app/error.js` (étape 3).
+
 - [ ] **Step 2 : Vérifier que le projet compile**
 
 Run: `npx next build`
