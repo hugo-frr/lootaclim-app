@@ -1214,7 +1214,13 @@ Note : `redirect()` est appelé **hors** du `try/catch` — il fonctionne en lev
 > l'année (un comptage se désynchronise si une ligne est supprimée), et constante
 > unique `ATTEMPTS`. Le fichier committé fait foi.
 > Reportés volontairement : anti-abus et vérification d'email (étapes 3-5,
-> bloquants avant toute mise en ligne publique), `app/error.js` (étape 3).
+> bloquants avant toute mise en ligne publique), `app/error.js` (étape 3),
+> page de confirmation énumérable (références séquentielles LC-AAAA-NNNN
+> devinables → nom + adresse + montants visibles sans authentification ;
+> avant mise en ligne : référence à forte entropie OU vérification secondaire
+> type code postal, comme les compagnies aériennes), ligne `floorFee` à
+> ajouter au récapitulatif de confirmation le jour où les frais d'étage
+> s'activent (sinon le total ne correspondra plus au détail affiché).
 
 - [ ] **Step 2 : Vérifier que le projet compile**
 
