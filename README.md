@@ -26,6 +26,8 @@ npm run dev          # démarre le site
 |---|---|
 | `/` | Accueil (la vitrine 3D sera intégrée ici plus tard) |
 | `/catalogue` | Catalogue avec disponibilité en temps réel depuis la base |
+| `/reserver/<modèle>` | Tunnel de réservation : calendrier de disponibilité, coordonnées, récapitulatif |
+| `/reserver/confirmation/<réf>` | Confirmation d'une demande de réservation |
 | `/admin` | Back-office : tableau de bord, réservations, livraisons, parc machines |
 
 ## 🗄️ Voir et modifier la base de données
@@ -35,6 +37,17 @@ npm run db:studio
 ```
 
 Ouvre une interface visuelle (Prisma Studio) pour ajouter/modifier des produits, machines, clients… sans écrire de code. C'est votre outil d'administration en attendant les formulaires du back-office.
+
+## 🧪 Tests
+
+```bash
+npm test
+```
+
+Vérifie la logique métier (disponibilité, battement d'un jour entre deux
+locations, prix dégressif, validation du formulaire) sans toucher à la base.
+Les demandes de réservation arrivent dans `/admin` en statut « En attente » —
+la validation manuelle (boutons de confirmation) arrive à l'étape 3.
 
 ## 📁 Structure du projet
 
@@ -58,7 +71,7 @@ lootaclim-app/
 ## 🗺️ Feuille de route
 
 - [x] Étape 1 : fondations — base de données, catalogue, back-office (lecture)
-- [ ] Étape 2 : tunnel de réservation avec calendrier de disponibilité par dates
+- [x] Étape 2 : tunnel de réservation avec calendrier de disponibilité par dates
 - [ ] Étape 3 : authentification (protéger /admin) + formulaires d'édition
 - [ ] Étape 4 : paiement Stripe + caution par empreinte
 - [ ] Étape 5 : emails automatiques + factures PDF
@@ -68,5 +81,8 @@ lootaclim-app/
 
 - La base locale est un fichier `prisma/dev.db` (SQLite). En production on passera
   sur PostgreSQL en changeant 2 lignes dans `schema.prisma`.
-- `/admin` n'a pas encore de mot de passe : ne déployez pas en ligne avant l'étape 3.
+- **Ne déployez pas en ligne avant l'étape 3** : `/admin` n'a pas de mot de passe,
+  le tunnel de réservation n'a ni anti-abus ni vérification d'email, et les pages
+  de confirmation sont devinables (références séquentielles). Tout cela est prévu
+  aux étapes 3 à 5.
 - Après toute modification de `schema.prisma`, relancer `npm run db:migrate`.

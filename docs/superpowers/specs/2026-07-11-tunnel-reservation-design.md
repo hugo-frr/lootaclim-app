@@ -122,8 +122,9 @@ Entrées : prix/jour en centimes, dates de début et fin. Sortie : devis
      créneaux choisis.
 3. Redirection vers `/reserver/confirmation/[reference]`.
 
-Si la disponibilité a disparu entre-temps : message « Ces dates viennent d'être
-réservées » et calendrier rafraîchi.
+Si la disponibilité a disparu entre-temps : message d'indisponibilité précis
+(celui de `rangeError`, plus juste que le « Ces dates viennent d'être réservées »
+générique initialement prévu — ajusté en revue) et calendrier rafraîchi.
 
 ## 6. Page de confirmation
 
