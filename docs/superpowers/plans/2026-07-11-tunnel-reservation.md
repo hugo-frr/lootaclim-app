@@ -1221,6 +1221,10 @@ Note : `redirect()` est appelé **hors** du `try/catch` — il fonctionne en lev
 > type code postal, comme les compagnies aériennes), ligne `floorFee` à
 > ajouter au récapitulatif de confirmation le jour où les frais d'étage
 > s'activent (sinon le total ne correspondra plus au détail affiché).
+> Plafond du schéma de référence : au-delà de 9999 réservations dans une même
+> année, le tri lexicographique des références se dérègle (LC-2026-10000 <
+> LC-2026-9999) — le passage aux références à forte entropie prévu avant
+> lancement règle aussi ce point.
 > Note d'upgrade : Next 15/React 19 réinitialise automatiquement les
 > formulaires non contrôlés après une action serveur — les champs de l'étape 2
 > du tunnel seraient vidés à chaque erreur ; prévoir des champs contrôlés ou

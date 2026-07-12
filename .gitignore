@@ -15,3 +15,6 @@ prisma/dev.db-journal
 
 # macOS
 .DS_Store
+
+# Configuration locale de session Claude Code
+.claude/

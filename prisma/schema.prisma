@@ -110,7 +110,7 @@ model Delivery {
   id        String   @id @default(cuid())
   type      String // DROPOFF (livraison) | PICKUP (reprise)
   date      DateTime
-  timeSlot  String // "9h-12h" | "14h-18h"
+  timeSlot  String // créneau de 2 h — voir TIME_SLOTS dans lib/constants.js
   status    String   @default("SCHEDULED") // SCHEDULED | IN_PROGRESS | DONE | FAILED
   proofUrl  String? // photo/signature (plus tard)
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)

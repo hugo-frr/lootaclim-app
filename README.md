@@ -56,12 +56,19 @@ lootaclim-app/
 ├── app/                  ← les pages du site
 │   ├── page.js           ← accueil
 │   ├── catalogue/        ← catalogue public
+│   ├── reserver/         ← tunnel de réservation (calendrier, formulaire,
+│   │                        server action, page de confirmation)
 │   ├── admin/            ← back-office
 │   ├── layout.js         ← navigation commune
 │   └── globals.css       ← styles (palette LOOTACLIM)
 ├── lib/
 │   ├── prisma.js         ← connexion à la base
-│   └── constants.js      ← statuts et libellés français
+│   ├── constants.js      ← statuts, créneaux et libellés français
+│   ├── dates.js          ← jours civils "AAAA-MM-JJ", heure de Paris
+│   ├── pricing.js        ← calcul du devis (dégressif, livraison)
+│   ├── availability.js   ← disponibilité par dates (battement d'1 jour)
+│   ├── validation.js     ← validation serveur du formulaire
+│   └── *.test.js         ← tests de la logique métier (npm test)
 ├── prisma/
 │   ├── schema.prisma     ← LE fichier clé : structure de la base
 │   └── seed.js           ← données de départ

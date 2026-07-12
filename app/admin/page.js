@@ -14,7 +14,7 @@ const dateFr = (d) =>
 export default async function Admin() {
   const [bookings, units, deliveries, customerCount] = await Promise.all([
     prisma.booking.findMany({
-      include: { customer: true, unit: { include: { product: true } } },
+      include: { customer: true, product: true, unit: { include: { product: true } } },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
@@ -74,7 +74,7 @@ export default async function Admin() {
               <tr key={b.id}>
                 <td>{b.reference}</td>
                 <td>{b.customer.firstName} {b.customer.lastName}</td>
-                <td>{b.unit ? `${b.unit.product.name} · ${b.unit.serialNumber}` : "— à affecter —"}</td>
+                <td>{b.unit ? `${b.unit.product.name} · ${b.unit.serialNumber}` : `${b.product.name} · — à affecter —`}</td>
                 <td>{dateFr(b.startDate)}</td>
                 <td>{dateFr(b.endDate)}</td>
                 <td>{euros(b.total)}</td>
