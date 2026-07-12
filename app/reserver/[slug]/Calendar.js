@@ -29,6 +29,15 @@ function monthName(year, month) {
   });
 }
 
+// Libellé accessible d'un jour ("mercredi 15 juillet") — ancré à midi pour
+// éviter tout glissement de jour entre fuseaux horaires.
+const dayLabel = (day) =>
+  new Date(`${day}T12:00:00`).toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
 // Calendrier de sélection d'une plage : premier clic = début, deuxième = fin
 // (re-clic pour recommencer). Les jours complets ou hors bornes sont grisés.
 export default function Calendar({
@@ -107,7 +116,7 @@ export default function Calendar({
                     className={`cal-day${inRange(day) ? " in-range" : ""}${isEdge(day) ? " edge" : ""}`}
                     disabled={day < minDay || day > maxDay || full.has(day)}
                     onClick={() => clickDay(day)}
-                    aria-label={day}
+                    aria-label={dayLabel(day)}
                   >
                     {Number(day.slice(8))}
                   </button>

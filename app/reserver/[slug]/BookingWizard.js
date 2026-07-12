@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import Calendar from "./Calendar";
 import { createBooking } from "./actions";
 import { quote } from "../../../lib/pricing";
@@ -33,6 +34,14 @@ function SubmitButton() {
 
 export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
   const [state, formAction] = useFormState(createBooking, {});
+  const router = useRouter();
+
+  // Si le serveur refuse (ex. dates prises entre-temps), on recharge les
+  // données serveur : le calendrier reflète alors la vraie disponibilité.
+  useEffect(() => {
+    if (state.error) router.refresh();
+  }, [state, router]);
+
   const [startDay, setStartDay] = useState(null);
   const [endDay, setEndDay] = useState(null);
   const [hint, setHint] = useState(null);
@@ -159,6 +168,12 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
                     </option>
                   ))}
                 </select>
+                {deliveryOptions.length === 0 && (
+                  <p className="cal-hint">
+                    Plus aucun créneau de livraison aujourd&apos;hui : choisissez un
+                    autre jour de début.
+                  </p>
+                )}
               </div>
               <div className="field">
                 <label htmlFor="pickupSlot">Reprise le {dateFr(endDay)}</label>
@@ -178,6 +193,12 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
                     </option>
                   ))}
                 </select>
+                {deliverySlot && pickupOptions.length === 0 && (
+                  <p className="cal-hint">
+                    Pour une location d&apos;un jour, choisissez un créneau de
+                    livraison plus tôt dans la journée.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -195,7 +216,7 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
         <div className="recap-line">
           <span>Capacité</span>
           <span>
-            {product.maxAreaM2} m² · {product.noiseDb} dB
+            {product.maxAreaM2} m² · {product.powerKw} kW · {product.noiseDb} dB
           </span>
         </div>
         {datesChosen ? (
@@ -245,7 +266,7 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
             Choisissez vos dates pour voir le prix.
           </p>
         )}
-        {state.error && <p className="form-error">{state.error}</p>}
+        {state.error && <p className="form-error" role="alert">{state.error}</p>}
       </div>
     </form>
   );
