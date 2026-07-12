@@ -1221,6 +1221,10 @@ Note : `redirect()` est appelé **hors** du `try/catch` — il fonctionne en lev
 > type code postal, comme les compagnies aériennes), ligne `floorFee` à
 > ajouter au récapitulatif de confirmation le jour où les frais d'étage
 > s'activent (sinon le total ne correspondra plus au détail affiché).
+> Note d'upgrade : Next 15/React 19 réinitialise automatiquement les
+> formulaires non contrôlés après une action serveur — les champs de l'étape 2
+> du tunnel seraient vidés à chaque erreur ; prévoir des champs contrôlés ou
+> `defaultValue` réhydratés au moment de cette montée de version.
 
 - [ ] **Step 2 : Vérifier que le projet compile**
 
