@@ -51,7 +51,10 @@ Node 20 (tests, actions) et dans le runtime edge du middleware.
      suffisant pour un site mono-instance.)
   3. Comparaison du mot de passe en temps constant.
   4. Succès → pose du cookie signé (expiration à J+7) puis `redirect(suivant)`.
-     Échec → `{ error: "Mot de passe incorrect." }`.
+     Échec → redirection vers la page de connexion avec le message en paramètre
+     `?erreur=` (bannière `role="alert"`). *(Ajusté à la rédaction du plan : le
+     patron « bannière via redirection » remplace `useFormState` partout dans
+     l'admin — les pages restent des Server Components purs.)*
 - Server Action `logout` : suppression du cookie, redirection vers
   `/admin/connexion`. Bouton « Se déconnecter » dans l'en-tête du back-office.
 
@@ -107,14 +110,17 @@ plusieurs lignes changent, recalculent leurs préconditions EN transaction
 - `markDelivery(id, résultat)` — `résultat ∈ {DONE, FAILED}` ; pour `DONE`,
   applique atomiquement les effets de `deliveryDoneEffects` (livraison +
   réservation + machine).
-- `setUnitStatus(unitId, statut)` et `saveUnitNotes(unitId, notes)` — via
-  `unitStatusChangeError` ; notes limitées à 500 caractères.
+- `saveUnit(unitId, statut, notes)` — statut via `unitStatusChangeError`,
+  notes limitées à 500 caractères. *(Ajusté à la rédaction du plan : une seule
+  action « Enregistrer » par ligne du parc, au lieu de deux.)*
 - `updateProduct(id, champs)` — description (10 à 500 caractères), prix saisi
   en euros (converti en centimes, entre 1 € et 500 €/jour), actif (booléen).
   Le slug et le nom ne sont pas éditables (ils structurent les URLs et le seed).
 
-Les erreurs de validation reviennent au formulaire concerné (même patron
-`useFormState`/`{ error }` que le tunnel).
+Les erreurs de validation reviennent en bannière au-dessus du tableau concerné,
+via une redirection `?erreur=<message>` — les pages admin restent des Server
+Components purs ; le seul composant client est le bouton de confirmation
+d'annulation.
 
 ## 6. Interface
 
