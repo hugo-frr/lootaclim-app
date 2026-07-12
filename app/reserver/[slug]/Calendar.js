@@ -107,6 +107,7 @@ export default function Calendar({
                     className={`cal-day${inRange(day) ? " in-range" : ""}${isEdge(day) ? " edge" : ""}`}
                     disabled={day < minDay || day > maxDay || full.has(day)}
                     onClick={() => clickDay(day)}
+                    aria-label={day}
                   >
                     {Number(day.slice(8))}
                   </button>
