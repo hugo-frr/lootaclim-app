@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { euros } from "../../lib/constants";
+import Link from "next/link";
 
 // Cette page est un "Server Component" : elle interroge la base de données
 // directement côté serveur, puis envoie du HTML tout prêt au navigateur.
@@ -42,6 +43,15 @@ export default async function Catalogue() {
                   <span className="stock-ko">Indisponible actuellement</span>
                 )}
               </p>
+              {p.units.some((u) => !["RETIRED", "MAINTENANCE"].includes(u.status)) && (
+                <Link
+                  href={`/reserver/${p.slug}`}
+                  className="btn btn-primary"
+                  style={{ marginTop: 14, display: "block", textAlign: "center" }}
+                >
+                  Réserver
+                </Link>
+              )}
             </div>
           );
         })}
@@ -49,7 +59,8 @@ export default async function Catalogue() {
 
       <p style={{ marginTop: 30, fontSize: 13.5, color: "#7b98ab" }}>
         La disponibilité affichée vient en direct de votre stock en base de
-        données. Prochaine étape : le calendrier de réservation par dates.
+        données. Le bouton « Réserver » ouvre le calendrier de disponibilité
+        du modèle.
       </p>
     </div>
   );
