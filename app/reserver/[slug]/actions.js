@@ -66,6 +66,16 @@ export async function createBooking(prevState, formData) {
               : rangeError(f.startDay, f.endDay, full, minDay, maxDay);
           if (unavailable) throw new BookingError(unavailable);
 
+          // Plafond anti-abus : pas plus de 3 demandes en attente par client.
+          const pendingCount = await tx.booking.count({
+            where: { customer: { email: f.email }, status: "PENDING" },
+          });
+          if (pendingCount >= 3) {
+            throw new BookingError(
+              "Vous avez déjà 3 demandes en attente. Attendez leur confirmation ou contactez-nous."
+            );
+          }
+
           // Les montants sont TOUJOURS recalculés côté serveur
           const q = quote(product.dailyPrice, f.startDay, f.endDay);
 
