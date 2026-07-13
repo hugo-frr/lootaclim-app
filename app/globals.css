@@ -147,3 +147,21 @@ footer { text-align: center; padding: 34px 20px; color: #7b98ab; font-size: 13px
   .recap { position: static; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ---- Back-office (étape 3) ---- */
+.admin-header { display: flex; gap: 18px; align-items: center; font-size: 14px; }
+.admin-header a { color: var(--deep); text-decoration: none; font-weight: 600; }
+.admin-header a:hover { text-decoration: underline; }
+.admin-header form { margin-left: auto; }
+.linklike { border: none; background: none; color: #c0392b; font: inherit; font-weight: 600; cursor: pointer; padding: 0; }
+.linklike:hover { text-decoration: underline; }
+.btn-small { border: none; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; background: var(--navy); color: #fff; }
+.btn-small:hover { opacity: 0.85; }
+.btn-danger { background: #ffe1dc; color: #c0392b; }
+.actions-cell { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.actions-cell form { display: flex; gap: 6px; align-items: center; }
+.actions-cell select, .actions-cell input { padding: 6px 8px; border: 1px solid rgba(63, 182, 224, 0.35); border-radius: 8px; font-size: 12.5px; font-family: inherit; background: #fff; color: var(--navy); }
+.form-ok { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #d9f3e6; color: #1a8c5b; font-size: 13.5px; }
+.muted { color: #7b98ab; font-size: 12.5px; font-weight: 400; }
+textarea { width: 100%; padding: 10px 12px; border: 1px solid rgba(63, 182, 224, 0.35); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; color: var(--navy); resize: vertical; }
+textarea:focus { outline: 2px solid var(--cool); border-color: transparent; }
