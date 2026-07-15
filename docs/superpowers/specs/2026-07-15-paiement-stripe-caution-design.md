@@ -54,11 +54,13 @@ model Booking {
 `paymentId` et `depositId` existent déjà dans le schéma (ids Stripe du
 paiement et de l'empreinte) : ils sont réutilisés tels quels.
 
-`BLOCKING_STATUSES` (`lib/availability.js` et `lib/transitions.js`) passe de
-`["PENDING", "CONFIRMED", "DELIVERED"]` à
+`BLOCKING_STATUSES` de `lib/availability.js` (utilisé pour le calcul du
+calendrier) passe de `["PENDING", "CONFIRMED", "DELIVERED"]` à
 `["AWAITING_PAYMENT", "PENDING", "CONFIRMED", "DELIVERED"]` — une réservation
 en cours de paiement bloque le calendrier au même titre qu'une réservation
-confirmée.
+confirmée. Le `BLOCKING_STATUSES` de `lib/transitions.js` (chevauchements
+machine par machine) reste inchangé : une réservation `AWAITING_PAYMENT` n'a
+jamais de machine affectée, donc n'entre jamais dans ce calcul.
 
 Le plafond de 3 demandes par email (étape 3) compte désormais
 `AWAITING_PAYMENT` + `PENDING` ensemble, sinon quelqu'un pourrait ouvrir des
