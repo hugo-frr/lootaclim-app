@@ -24,6 +24,7 @@ model Product {
   noiseDb     Int // 46
   maxAreaM2   Int // 35
   dailyPrice  Int // en CENTIMES : 1800 = 18,00 €
+  depositAmount Int          @default(0) // caution en CENTIMES, éditable en back-office
   active      Boolean        @default(true)
   images      ProductImage[]
   units       Unit[]
@@ -58,6 +59,7 @@ model Customer {
   lastName      String
   phone         String
   internalNotes String? // visible uniquement en back-office
+  stripeCustomerId String? // id client Stripe, pour débiter la caution plus tard sans redemander la carte
   addresses     Address[]
   bookings      Booking[]
   createdAt     DateTime  @default(now())
@@ -77,27 +79,32 @@ model Address {
 
 model Booking {
   id          String     @id @default(cuid())
-  reference   String     @unique // "LC-2026-0001"
+  reference   String     @unique
   customer    Customer   @relation(fields: [customerId], references: [id])
   customerId  String
   address     Address    @relation(fields: [addressId], references: [id])
   addressId   String
-  // Le MODÈLE réservé. La machine physique (unit) est affectée plus tard en
-  // back-office ; c'est ce lien qui permet de bloquer le bon calendrier.
   product     Product    @relation(fields: [productId], references: [id])
   productId   String
   unit        Unit?      @relation(fields: [unitId], references: [id])
-  unitId      String? // affectée en back-office avant livraison — doit appartenir au même modèle que productId
+  unitId      String?
   startDate   DateTime
   endDate     DateTime
-  status      String     @default("PENDING") // PENDING | CONFIRMED | DELIVERED | RETURNED | CANCELLED
-  subtotal    Int // centimes
+  status      String     @default("AWAITING_PAYMENT")
+  // AWAITING_PAYMENT | PENDING | CONFIRMED | DELIVERED | RETURNED | CANCELLED
+  checkoutExpiresAt DateTime? // fin de validité de la session Stripe Checkout, tant que status = AWAITING_PAYMENT
+  subtotal    Int
   discount    Int        @default(0)
   deliveryFee Int        @default(2900)
   floorFee    Int        @default(0)
   total       Int
-  depositId   String? // empreinte de caution Stripe (plus tard)
-  paymentId   String? // paiement Stripe (plus tard)
+  depositAmount        Int    @default(0) // caution en centimes, figée au moment de la réservation
+  depositStatus         String @default("NONE")
+  // NONE | HELD | FAILED | RELEASED | CAPTURED
+  capturedAmount        Int?   // montant réellement encaissé si CAPTURED
+  depositId             String? // id du PaymentIntent Stripe de la caution
+  paymentId             String? // id du PaymentIntent Stripe de la location
+  stripePaymentMethodId String? // moyen de paiement enregistré au paiement, réutilisé pour la caution
   deliveries  Delivery[]
   createdAt   DateTime   @default(now())
 

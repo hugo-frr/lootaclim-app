@@ -28,6 +28,7 @@ async function main() {
       noiseDb: 42,
       maxAreaM2: 20,
       dailyPrice: 1200,
+      depositAmount: 10000, // 100 €
       images: {
         create: [{ url: "/images/seine-1.jpg", alt: "Climatiseur SEINE vue de face", position: 0 }],
       },
@@ -44,6 +45,7 @@ async function main() {
       noiseDb: 46,
       maxAreaM2: 35,
       dailyPrice: 1800,
+      depositAmount: 15000, // 150 €
       images: {
         create: [{ url: "/images/rivoli-1.jpg", alt: "Climatiseur RIVOLI vue de face", position: 0 }],
       },
@@ -60,6 +62,7 @@ async function main() {
       noiseDb: 50,
       maxAreaM2: 55,
       dailyPrice: 2600,
+      depositAmount: 25000, // 250 €
       images: {
         create: [{ url: "/images/trocadero-1.jpg", alt: "Climatiseur TROCADÉRO vue de face", position: 0 }],
       },
