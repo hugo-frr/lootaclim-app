@@ -1,15 +1,23 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "../../../lib/prisma";
 import { validateBookingForm } from "../../../lib/validation";
 import { capacity, fullDays, rangeError, minStartDay } from "../../../lib/availability";
 import { quote } from "../../../lib/pricing";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
+import { createCheckoutSession, ensureStripeCustomer } from "../../../lib/stripe";
 
 // Nombre de tentatives en cas de conflit d'écriture strictement simultané
 // (collision de référence P2002, conflit de sérialisation P2034).
 const ATTEMPTS = 3;
+
+// Durée de blocage des dates pendant le paiement Stripe — 32 min plutôt que
+// 30 pour rester au-dessus du minimum imposé par Stripe (`expires_at` doit
+// être à ≥ 30 min de l'instant de création de la session, qui a lieu
+// quelques centaines de ms après la création de la réservation).
+const CHECKOUT_WINDOW_MS = 32 * 60 * 1000;
 
 // Erreur "métier" dont le message est affiché tel quel au client — par
 // opposition aux erreurs techniques inattendues, qui doivent remonter.
@@ -20,7 +28,8 @@ class BookingError extends Error {
   }
 }
 
-// Crée une demande de réservation (statut PENDING). Appelée par le
+// Crée une demande de réservation (statut AWAITING_PAYMENT, bloque déjà le
+// calendrier) puis redirige vers le paiement Stripe. Appelée par le
 // formulaire du tunnel via useFormState : (étatPrécédent, formData) → état.
 export async function createBooking(prevState, formData) {
   const slug = String(formData.get("slug") ?? "");
@@ -33,10 +42,10 @@ export async function createBooking(prevState, formData) {
   const minDay = minStartDay(now);
   const maxDay = addMonths(now.day, 3);
 
-  let reference = null;
-  for (let attempt = 0; attempt < ATTEMPTS && !reference; attempt++) {
+  let created = null;
+  for (let attempt = 0; attempt < ATTEMPTS && !created; attempt++) {
     try {
-      reference = await prisma.$transaction(
+      created = await prisma.$transaction(
         async (tx) => {
           const product = await tx.product.findUnique({
             where: { slug },
@@ -51,7 +60,14 @@ export async function createBooking(prevState, formData) {
           const cap = capacity(product.units);
           const bookings = (
             await tx.booking.findMany({
-              where: { productId: product.id },
+              where: {
+                productId: product.id,
+                // Défense en profondeur : une réservation "paiement en cours"
+                // dont la session Stripe a expiré ne doit plus bloquer le
+                // calendrier, même si le webhook d'expiration n'est pas
+                // encore passé (ex. webhook mal configuré, panne réseau).
+                NOT: { status: "AWAITING_PAYMENT", checkoutExpiresAt: { lt: new Date() } },
+              },
               select: { startDate: true, endDate: true, status: true },
             })
           ).map((b) => ({
@@ -66,9 +82,10 @@ export async function createBooking(prevState, formData) {
               : rangeError(f.startDay, f.endDay, full, minDay, maxDay);
           if (unavailable) throw new BookingError(unavailable);
 
-          // Plafond anti-abus : pas plus de 3 demandes en attente par client.
+          // Plafond anti-abus : pas plus de 3 demandes en attente OU en cours
+          // de paiement par client.
           const pendingCount = await tx.booking.count({
-            where: { customer: { email: f.email }, status: "PENDING" },
+            where: { customer: { email: f.email }, status: { in: ["PENDING", "AWAITING_PAYMENT"] } },
           });
           if (pendingCount >= 3) {
             throw new BookingError(
@@ -111,7 +128,7 @@ export async function createBooking(prevState, formData) {
           const next = last ? Number(last.reference.split("-").pop()) + 1 : 1;
           const ref = `LC-${year}-${String(next).padStart(4, "0")}`;
 
-          await tx.booking.create({
+          const booking = await tx.booking.create({
             data: {
               reference: ref,
               customerId: customer.id,
@@ -119,12 +136,14 @@ export async function createBooking(prevState, formData) {
               productId: product.id,
               startDate: new Date(f.startDay),
               endDate: new Date(f.endDay),
-              status: "PENDING",
+              status: "AWAITING_PAYMENT",
+              checkoutExpiresAt: new Date(Date.now() + CHECKOUT_WINDOW_MS),
               subtotal: q.subtotal,
               discount: q.discount,
               deliveryFee: q.deliveryFee,
               floorFee: q.floorFee,
               total: q.total,
+              depositAmount: product.depositAmount,
               deliveries: {
                 create: [
                   { type: "DROPOFF", date: new Date(f.startDay), timeSlot: f.deliverySlot },
@@ -133,22 +152,35 @@ export async function createBooking(prevState, formData) {
               },
             },
           });
-          return ref;
+          return { booking, customer, product };
         },
         // Sans effet sur SQLite (déjà sérialisé via BEGIN IMMEDIATE), mais
-        // indispensable le jour du passage à PostgreSQL : sans ce niveau
-        // d'isolation, deux transactions pourraient lire la disponibilité
-        // en même temps et surréserver.
+        // indispensable le jour du passage à PostgreSQL.
         { isolationLevel: "Serializable" }
       );
     } catch (e) {
       if (e.isUserError) return { error: e.message };
       // P2002 : collision de référence ; P2034 : conflit de sérialisation.
-      // On retente — la re-vérification de disponibilité refera foi.
       if ((e.code === "P2002" || e.code === "P2034") && attempt < ATTEMPTS - 1) continue;
       throw e;
     }
   }
 
-  redirect(`/reserver/confirmation/${reference}`);
+  const { booking, customer, product } = created;
+
+  let session;
+  try {
+    const host = headers().get("host");
+    const protocol = host?.startsWith("localhost") ? "http" : "https";
+    const baseUrl = `${protocol}://${host}`;
+    const stripeCustomerId = await ensureStripeCustomer(customer);
+    session = await createCheckoutSession(booking, product, stripeCustomerId, baseUrl);
+  } catch {
+    // Le paiement n'a pas pu démarrer : on libère les dates plutôt que de
+    // laisser une réservation fantôme bloquer le calendrier.
+    await prisma.booking.delete({ where: { id: booking.id } });
+    return { error: "Le paiement n'a pas pu être initié. Réessayez dans un instant." };
+  }
+
+  redirect(session.url);
 }

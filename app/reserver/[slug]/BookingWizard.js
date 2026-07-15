@@ -27,7 +27,7 @@ function SubmitButton() {
       disabled={pending}
       style={{ width: "100%", marginTop: 14 }}
     >
-      {pending ? "Envoi en cours…" : "Confirmer ma demande"}
+      {pending ? "Redirection vers le paiement…" : "Payer et envoyer ma demande"}
     </button>
   );
 }
@@ -257,8 +257,8 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
             </div>
             <SubmitButton />
             <p style={{ marginTop: 10, fontSize: 12.5, color: "#5c7d94" }}>
-              Aucun paiement en ligne pour l'instant : nous confirmons votre
-              demande par téléphone ou par email.
+              Paiement sécurisé par Stripe. Vous allez être redirigé vers une
+              page de paiement, puis vers votre confirmation.
             </p>
           </>
         ) : (

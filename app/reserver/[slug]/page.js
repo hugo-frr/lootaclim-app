@@ -7,7 +7,7 @@ import BookingWizard from "./BookingWizard";
 
 export const dynamic = "force-dynamic";
 
-export default async function Reserver({ params }) {
+export default async function Reserver({ params, searchParams }) {
   const product = await prisma.product.findUnique({
     where: { slug: params.slug },
     include: { units: true },
@@ -21,7 +21,10 @@ export default async function Reserver({ params }) {
 
   const bookings = (
     await prisma.booking.findMany({
-      where: { productId: product.id },
+      where: {
+        productId: product.id,
+        NOT: { status: "AWAITING_PAYMENT", checkoutExpiresAt: { lt: new Date() } },
+      },
       select: { startDate: true, endDate: true, status: true },
     })
   ).map((b) => ({
@@ -45,19 +48,26 @@ export default async function Reserver({ params }) {
           </p>
         </div>
       ) : (
-        <BookingWizard
-          product={{
-            slug: product.slug,
-            name: product.name,
-            dailyPrice: product.dailyPrice,
-            maxAreaM2: product.maxAreaM2,
-            powerKw: product.powerKw,
-            noiseDb: product.noiseDb,
-          }}
-          fullDays={full}
-          minDay={minDay}
-          maxDay={maxDay}
-        />
+        <>
+          {searchParams.annule && (
+            <p className="form-error" role="alert">
+              Paiement annulé : vos dates n&apos;ont pas été bloquées, vous pouvez recommencer.
+            </p>
+          )}
+          <BookingWizard
+            product={{
+              slug: product.slug,
+              name: product.name,
+              dailyPrice: product.dailyPrice,
+              maxAreaM2: product.maxAreaM2,
+              powerKw: product.powerKw,
+              noiseDb: product.noiseDb,
+            }}
+            fullDays={full}
+            minDay={minDay}
+            maxDay={maxDay}
+          />
+        </>
       )}
     </div>
   );
