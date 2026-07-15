@@ -108,6 +108,15 @@ Tant que `STRIPE_SECRET_KEY` n'est pas configurée, le reste du site continue
 de fonctionner (catalogue, back-office), mais une demande de réservation ne
 peut pas aboutir.
 
+⚠️ **Limite connue** : les banques ne conservent le blocage d'une caution
+(« empreinte ») que 7 jours environ. Pour une location de plus d'une
+semaine, la caution posée avant la livraison peut donc avoir expiré au
+moment de la reprise — la libération ou l'encaissement échoueraient alors
+avec une erreur Stripe. Pour l'instant, c'est une limite du fonctionnement
+par blocage de carte ; en attendant une solution (nouveau blocage à
+mi-location, par exemple), soyez attentif avec les locations longues et
+vérifiez la caution manuellement si besoin.
+
 ## 📁 Structure du projet
 
 ```

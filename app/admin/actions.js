@@ -51,33 +51,49 @@ export async function cancelBooking(formData) {
   const booking = await prisma.booking.findUnique({ where: { id } });
   let error = booking ? cancelError(booking) : "Réservation introuvable.";
 
-  // Les appels Stripe se font AVANT l'écriture en base, hors transaction
-  // (un appel réseau ne doit jamais rester dans une transaction ouverte).
-  // S'ils échouent, l'annulation est bloquée plutôt que de désynchroniser
-  // l'argent et le statut.
-  if (!error) {
+  // Le remboursement de la location se fait AVANT l'écriture en base, hors
+  // transaction (un appel réseau ne doit jamais rester dans une transaction
+  // ouverte) : s'il échoue, l'annulation est bloquée plutôt que de
+  // désynchroniser l'argent et le statut.
+  if (!error && booking.paymentId) {
     try {
-      if (booking.paymentId) await refundBookingStripe(booking);
-      if (booking.depositStatus === "HELD") await releaseDepositStripe(booking);
+      await refundBookingStripe(booking);
     } catch {
       error = "Le remboursement Stripe a échoué : réessayez dans un instant.";
     }
   }
 
+  let depositToRelease = null;
   if (!error) {
     await prisma.$transaction(async (tx) => {
       const fresh = await tx.booking.findUnique({ where: { id } });
       error = fresh ? cancelError(fresh) : "Réservation introuvable.";
       if (error) return;
+      if (fresh.depositStatus === "HELD") depositToRelease = fresh;
       await tx.booking.update({
         where: { id },
         data: {
           status: "CANCELLED",
-          depositStatus: booking.depositStatus === "HELD" ? "RELEASED" : fresh.depositStatus,
+          depositStatus: fresh.depositStatus === "HELD" ? "RELEASED" : fresh.depositStatus,
         },
       });
     });
   }
+
+  // La libération de la caution se fait APRÈS l'écriture, à partir de l'état
+  // lu au moment de la transaction (fresh) et non de la lecture initiale :
+  // une caution posée entre les deux (par la confirmation ou la tâche
+  // planifiée) doit quand même être libérée. Si Stripe échoue ici, la
+  // réservation reste annulée mais la caution doit être libérée à la main.
+  if (!error && depositToRelease) {
+    try {
+      await releaseDepositStripe(depositToRelease);
+    } catch {
+      error =
+        "Réservation annulée, mais la libération de la caution a échoué : libérez-la manuellement depuis votre tableau de bord Stripe.";
+    }
+  }
+
   finish("/admin", error);
 }
 

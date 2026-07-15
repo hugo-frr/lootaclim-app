@@ -28,8 +28,13 @@ export default async function Confirmation({ params, searchParams }) {
   // pas encore eu le temps, on vérifie directement auprès de Stripe (appel
   // idempotent, sans effet si déjà finalisé par le webhook).
   if (booking.status === "AWAITING_PAYMENT" && searchParams.session_id) {
-    const updated = await finalizeCheckoutSession(String(searchParams.session_id));
-    if (updated) booking = { ...booking, ...updated };
+    try {
+      const updated = await finalizeCheckoutSession(String(searchParams.session_id));
+      if (updated) booking = { ...booking, ...updated };
+    } catch {
+      // Erreur transitoire côté Stripe : le webhook finalisera en arrière-plan ;
+      // on retombe simplement sur le message "en cours" ci-dessous.
+    }
   }
 
   if (booking.status === "AWAITING_PAYMENT") {

@@ -69,7 +69,7 @@ export default async function Admin({ searchParams }) {
   ]);
 
   const caConfirme = bookings
-    .filter((b) => !["CANCELLED", "PENDING"].includes(b.status))
+    .filter((b) => !["CANCELLED", "AWAITING_PAYMENT"].includes(b.status))
     .reduce((s, b) => s + b.total, 0);
   const dispo = units.filter((u) => u.status === "AVAILABLE").length;
 

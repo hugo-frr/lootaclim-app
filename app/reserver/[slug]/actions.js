@@ -85,7 +85,13 @@ export async function createBooking(prevState, formData) {
           // Plafond anti-abus : pas plus de 3 demandes en attente OU en cours
           // de paiement par client.
           const pendingCount = await tx.booking.count({
-            where: { customer: { email: f.email }, status: { in: ["PENDING", "AWAITING_PAYMENT"] } },
+            where: {
+              customer: { email: f.email },
+              OR: [
+                { status: "PENDING" },
+                { status: "AWAITING_PAYMENT", checkoutExpiresAt: { gte: new Date() } },
+              ],
+            },
           });
           if (pendingCount >= 3) {
             throw new BookingError(
