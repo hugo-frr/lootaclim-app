@@ -52,6 +52,16 @@ export default async function Produits({ searchParams }) {
               />
             </div>
             <div className="field">
+              <label htmlFor={`caution-${p.id}`}>Caution (€)</label>
+              <input
+                id={`caution-${p.id}`}
+                name="depositAmountEuros"
+                defaultValue={(p.depositAmount / 100).toLocaleString("fr-FR")}
+                inputMode="decimal"
+                required
+              />
+            </div>
+            <div className="field">
               <label htmlFor={`actif-${p.id}`}>Visible au catalogue</label>
               <select id={`actif-${p.id}`} name="active" defaultValue={p.active ? "oui" : "non"}>
                 <option value="oui">Oui</option>

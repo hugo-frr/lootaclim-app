@@ -182,6 +182,7 @@ export async function updateProduct(formData) {
   const id = String(formData.get("id") ?? "");
   const description = String(formData.get("description") ?? "").trim();
   const priceEuros = Number(String(formData.get("dailyPriceEuros") ?? "").replace(",", "."));
+  const depositEuros = Number(String(formData.get("depositAmountEuros") ?? "").replace(",", "."));
   const active = formData.get("active") === "oui";
 
   let error = null;
@@ -189,6 +190,8 @@ export async function updateProduct(formData) {
     error = "La description doit faire entre 10 et 500 caractères.";
   } else if (!Number.isFinite(priceEuros) || priceEuros < 1 || priceEuros > 500) {
     error = "Le prix par jour doit être compris entre 1 € et 500 €.";
+  } else if (!Number.isFinite(depositEuros) || depositEuros < 0 || depositEuros > 2000) {
+    error = "La caution doit être comprise entre 0 € et 2000 €.";
   } else {
     const exists = await prisma.product.findUnique({ where: { id } });
     if (!exists) {
@@ -196,7 +199,12 @@ export async function updateProduct(formData) {
     } else {
       await prisma.product.update({
         where: { id },
-        data: { description, dailyPrice: Math.round(priceEuros * 100), active },
+        data: {
+          description,
+          dailyPrice: Math.round(priceEuros * 100),
+          depositAmount: Math.round(depositEuros * 100),
+          active,
+        },
       });
     }
   }
