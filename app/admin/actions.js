@@ -12,6 +12,7 @@ import {
   unitAssignmentError,
   unitStatusChangeError,
 } from "../../lib/transitions";
+import { placeDepositIfDue, placeDueDeposits } from "../../lib/stripe";
 import { requireAdmin } from "./auth";
 
 // Toutes les actions suivent le même patron : requireAdmin → transaction qui
@@ -32,6 +33,7 @@ export async function confirmBooking(formData) {
     if (error) return;
     await tx.booking.update({ where: { id }, data: { status: "CONFIRMED" } });
   });
+  if (!error) await placeDepositIfDue(id);
   finish("/admin", error);
 }
 
@@ -170,4 +172,10 @@ export async function updateProduct(formData) {
   revalidatePath("/admin/produits");
   revalidatePath("/catalogue");
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
+}
+
+export async function checkDepositsNow() {
+  await requireAdmin();
+  const { failed } = await placeDueDeposits();
+  finish("/admin", failed > 0 ? `${failed} caution(s) n'ont pas pu être posées — vérifiez le tableau.` : null);
 }
