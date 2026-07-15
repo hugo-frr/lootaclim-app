@@ -19,6 +19,7 @@ import {
   placeDueDeposits,
   releaseDepositStripe,
   captureDepositStripe,
+  refundBookingStripe,
 } from "../../lib/stripe";
 import { requireAdmin } from "./auth";
 
@@ -47,13 +48,36 @@ export async function confirmBooking(formData) {
 export async function cancelBooking(formData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  let error = null;
-  await prisma.$transaction(async (tx) => {
-    const booking = await tx.booking.findUnique({ where: { id } });
-    error = booking ? cancelError(booking) : "Réservation introuvable.";
-    if (error) return;
-    await tx.booking.update({ where: { id }, data: { status: "CANCELLED" } });
-  });
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  let error = booking ? cancelError(booking) : "Réservation introuvable.";
+
+  // Les appels Stripe se font AVANT l'écriture en base, hors transaction
+  // (un appel réseau ne doit jamais rester dans une transaction ouverte).
+  // S'ils échouent, l'annulation est bloquée plutôt que de désynchroniser
+  // l'argent et le statut.
+  if (!error) {
+    try {
+      if (booking.paymentId) await refundBookingStripe(booking);
+      if (booking.depositStatus === "HELD") await releaseDepositStripe(booking);
+    } catch {
+      error = "Le remboursement Stripe a échoué : réessayez dans un instant.";
+    }
+  }
+
+  if (!error) {
+    await prisma.$transaction(async (tx) => {
+      const fresh = await tx.booking.findUnique({ where: { id } });
+      error = fresh ? cancelError(fresh) : "Réservation introuvable.";
+      if (error) return;
+      await tx.booking.update({
+        where: { id },
+        data: {
+          status: "CANCELLED",
+          depositStatus: booking.depositStatus === "HELD" ? "RELEASED" : fresh.depositStatus,
+        },
+      });
+    });
+  }
   finish("/admin", error);
 }
 
