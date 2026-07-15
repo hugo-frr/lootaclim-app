@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "../../../../lib/prisma";
 import { euros, FLOOR_LABELS } from "../../../../lib/constants";
+import { finalizeCheckoutSession } from "../../../../lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +16,33 @@ const dateFr = (d) =>
     timeZone: "UTC",
   });
 
-export default async function Confirmation({ params }) {
-  const booking = await prisma.booking.findUnique({
+export default async function Confirmation({ params, searchParams }) {
+  let booking = await prisma.booking.findUnique({
     where: { reference: params.reference },
     include: { product: true, customer: true, address: true, deliveries: true },
   });
   if (!booking) notFound();
+
+  // Filet de sécurité : dans l'immense majorité des cas le webhook Stripe a
+  // déjà finalisé le paiement avant que le client n'atterrisse ici. S'il n'a
+  // pas encore eu le temps, on vérifie directement auprès de Stripe (appel
+  // idempotent, sans effet si déjà finalisé par le webhook).
+  if (booking.status === "AWAITING_PAYMENT" && searchParams.session_id) {
+    const updated = await finalizeCheckoutSession(String(searchParams.session_id));
+    if (updated) booking = { ...booking, ...updated };
+  }
+
+  if (booking.status === "AWAITING_PAYMENT") {
+    return (
+      <div className="card" style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
+        <span className="eyebrow">Paiement en cours de confirmation…</span>
+        <p style={{ marginTop: 12, fontSize: 14.5, lineHeight: 1.7, color: "#5c7d94" }}>
+          Nous finalisons votre paiement. Si cette page ne se met pas à jour,
+          rechargez-la dans quelques secondes.
+        </p>
+      </div>
+    );
+  }
 
   const dropoff = booking.deliveries.find((d) => d.type === "DROPOFF");
   const pickup = booking.deliveries.find((d) => d.type === "PICKUP");
@@ -34,8 +56,8 @@ export default async function Confirmation({ params }) {
         </h1>
         <p className="confirm-ref">{booking.reference}</p>
         <p style={{ margin: "16px 0 4px", fontSize: 14.5, lineHeight: 1.7, color: "#5c7d94" }}>
-          Votre demande de réservation est enregistrée et les dates sont bloquées
-          pour vous. Nous la confirmons rapidement par téléphone ou par email.
+          Votre paiement est confirmé et les dates sont bloquées pour vous.
+          Nous confirmons votre demande rapidement par téléphone ou par email.
         </p>
       </div>
 
@@ -74,9 +96,15 @@ export default async function Confirmation({ params }) {
           <span>{euros(booking.deliveryFee)}</span>
         </div>
         <div className="recap-line total">
-          <span>Total</span>
+          <span>Total payé</span>
           <span>{euros(booking.total)}</span>
         </div>
+        {booking.depositAmount > 0 && (
+          <p style={{ marginTop: 10, fontSize: 12.5, color: "#5c7d94" }}>
+            Une caution de {euros(booking.depositAmount)} sera bloquée sur votre
+            carte juste avant la livraison (non débitée sauf dégât constaté).
+          </p>
+        )}
       </div>
 
       <p style={{ textAlign: "center", marginTop: 22 }}>
