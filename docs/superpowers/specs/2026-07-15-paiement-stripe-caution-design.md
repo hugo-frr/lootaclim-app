@@ -96,10 +96,8 @@ signature avec `STRIPE_WEBHOOK_SECRET`).
 
 - `checkout.session.completed` → retrouve la réservation par
   `metadata.bookingId`. Si elle est toujours `AWAITING_PAYMENT` : passe à
-  `PENDING`, enregistre `paymentId` (id du PaymentIntent) et
-  `stripeCustomerId` sur le client. Si la livraison a lieu aujourd'hui ou
-  demain (jour civil), tente immédiatement la pose de la caution (voir
-  section 4) — sinon la tâche quotidienne s'en chargera la veille.
+  `PENDING`, enregistre `paymentId` (id du PaymentIntent) et le moyen de
+  paiement pour la caution.
 - `checkout.session.expired` → si la réservation est toujours
   `AWAITING_PAYMENT`, elle est supprimée (date libérée).
 - Traitement idempotent (relit toujours le statut actuel avant d'agir) :
@@ -114,18 +112,25 @@ déjà passé et ce filet ne fait rien.
 
 ## 4. Caution — pose automatique
 
-Fonction partagée `placeDueDeposits()` dans `lib/stripe.js`, appelée par
-trois déclencheurs :
-- immédiatement après paiement si la livraison est proche (section 3) ;
+Une caution ne peut être posée que sur une réservation `CONFIRMED` — donc pas
+avant que vous ayez validé la demande en back-office, même si elle était déjà
+payée. Trois déclencheurs partagent la même logique de pose
+(`lib/stripe.js`) :
+- **immédiatement après votre confirmation** (bouton « Confirmer » en
+  back-office), si la livraison a lieu aujourd'hui ou demain — c'est le cas
+  qui couvre les réservations de dernière minute, où la tâche quotidienne
+  n'aurait pas le temps de passer avant la livraison ;
 - une tâche planifiée quotidienne (`app/api/cron/deposits/route.js`, protégée
   par un secret `CRON_SECRET`, programmée via `vercel.json` une fois par
-  jour) ;
-- le bouton back-office « Vérifier les cautions à poser aujourd'hui ».
+  jour), pour toutes les réservations déjà confirmées à l'avance ;
+- le bouton back-office « Vérifier les cautions à poser aujourd'hui », qui
+  rejoue la même vérification pour toutes les réservations concernées (filet
+  et outil de test).
 
-Elle sélectionne les réservations `CONFIRMED`, dont la livraison (`DROPOFF`)
-a lieu aujourd'hui ou demain (jour civil, comme les autres calculs de dates
-du projet — voir `lib/dates.js`), et dont `depositStatus === "NONE"`. Pour
-chacune :
+Ces trois déclencheurs sélectionnent les réservations `CONFIRMED` dont la
+livraison (`DROPOFF`) a lieu aujourd'hui ou demain (jour civil, comme les
+autres calculs de dates du projet — voir `lib/dates.js`) et dont
+`depositStatus === "NONE"`. Pour chacune :
 crée un `PaymentIntent` Stripe (`capture_method: "manual"`, `off_session:
 true`) sur le `stripeCustomerId` enregistré, montant = `booking.depositAmount`.
 
