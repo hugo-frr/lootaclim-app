@@ -27,7 +27,7 @@ npm run dev          # démarre le site
 | `/` | Accueil (la vitrine 3D sera intégrée ici plus tard) |
 | `/catalogue` | Catalogue avec disponibilité en temps réel depuis la base |
 | `/reserver/<modèle>` | Tunnel de réservation : calendrier de disponibilité, coordonnées, récapitulatif |
-| `/reserver/confirmation/<réf>` | Confirmation d'une demande de réservation |
+| `/reserver/confirmation/<réf>` | Confirmation d'une demande de réservation, une fois le paiement Stripe validé |
 | `/admin` | Back-office (protégé par mot de passe) : demandes, livraisons, parc machines |
 | `/admin/produits` | Édition des modèles : descriptions, prix, visibilité |
 
@@ -67,6 +67,47 @@ et collez le résultat après `SESSION_SECRET=`. Relancez `npm run dev`.
 Sans ces deux valeurs, le back-office reste fermé. La session dure 7 jours ;
 le bouton « Se déconnecter » est en haut du back-office.
 
+## 💳 Paiement Stripe
+
+Le paiement de la location et la caution (empreinte bancaire) passent par
+Stripe. À la première installation :
+
+1. Créez un compte gratuit sur [stripe.com](https://stripe.com) (le SIRET
+   n'est nécessaire que pour passer en mode réel, pas en mode test).
+2. Dans votre tableau de bord Stripe, activez le **mode test** (bouton en
+   haut à droite) et récupérez la clé secrète (`Développeurs` →
+   `Clés API` → `Clé secrète`, commence par `sk_test_...`).
+3. Collez-la dans `.env` après `STRIPE_SECRET_KEY=`.
+4. Générez `CRON_SECRET` avec la même commande que `SESSION_SECRET` :
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+5. Pour tester en local, installez la [Stripe CLI](https://stripe.com/docs/stripe-cli)
+   puis, dans un second terminal (à côté de `npm run dev`), lancez :
+
+```bash
+stripe login
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+   Cette commande affiche une valeur `whsec_...` à coller dans `.env` après
+   `STRIPE_WEBHOOK_SECRET=`. Gardez ce terminal ouvert pendant vos tests : il
+   relaie les notifications de paiement à votre site.
+6. Pour tester un paiement, utilisez la carte de test Stripe
+   `4242 4242 4242 4242`, une date d'expiration future et n'importe quel
+   code au dos.
+7. Le jour du vrai lancement : repassez `STRIPE_SECRET_KEY` et
+   `STRIPE_WEBHOOK_SECRET` en mode réel (clés `sk_live_...` et le secret du
+   webhook configuré sur votre domaine en ligne dans le tableau de bord
+   Stripe), et configurez `CRON_SECRET` sur votre projet Vercel pour que la
+   pose automatique de la caution s'exécute chaque jour.
+
+Tant que `STRIPE_SECRET_KEY` n'est pas configurée, le reste du site continue
+de fonctionner (catalogue, back-office), mais une demande de réservation ne
+peut pas aboutir.
+
 ## 📁 Structure du projet
 
 ```
@@ -98,7 +139,7 @@ lootaclim-app/
 - [x] Étape 1 : fondations — base de données, catalogue, back-office (lecture)
 - [x] Étape 2 : tunnel de réservation avec calendrier de disponibilité par dates
 - [x] Étape 3 : authentification (protéger /admin) + formulaires d'édition
-- [ ] Étape 4 : paiement Stripe + caution par empreinte
+- [x] Étape 4 : paiement Stripe + caution par empreinte
 - [ ] Étape 5 : emails automatiques + factures PDF
 - [ ] Étape 6 : intégration de la vitrine 3D + déploiement (Vercel + PostgreSQL)
 
@@ -106,8 +147,11 @@ lootaclim-app/
 
 - La base locale est un fichier `prisma/dev.db` (SQLite). En production on passera
   sur PostgreSQL en changeant 2 lignes dans `schema.prisma`.
-- **Avant toute mise en ligne** : le back-office est désormais protégé et le
-  tunnel plafonné à 3 demandes en attente par client, mais il manque encore la
-  vérification d'email des clients, des références de réservation non
-  devinables et le paiement (étapes 4-5).
+- **Avant toute mise en ligne** : le back-office est protégé, le tunnel plafonné
+  à 3 demandes en attente par client, et le paiement + la caution passent par
+  Stripe. Il manque encore la vérification d'email des clients et des
+  références de réservation non devinables (étapes suivantes).
 - Après toute modification de `schema.prisma`, relancer `npm run db:migrate`.
+- `/api/stripe/webhook` et `/api/cron/deposits` sont des routes techniques
+  (pas des pages) : la première reçoit les notifications de paiement Stripe,
+  la seconde pose automatiquement les cautions chaque jour.

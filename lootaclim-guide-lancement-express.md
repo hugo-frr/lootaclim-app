@@ -111,6 +111,11 @@ Une fois la saison passée, on construit ensemble la version définitive (Next.j
 
 L'expérience de l'été (questions récurrentes des clients, problèmes de livraison, taux d'occupation réel des machines) rendra ce site custom bien meilleur que si on le construisait aujourd'hui à l'aveugle. Vos données clients et l'historique seront exportables de la plateforme vers votre future base.
 
+**Mise à jour du 15 juillet 2026** : le site sur-mesure (Phase 2) intègre
+désormais nativement le paiement Stripe et la caution par empreinte
+bancaire — ce n'est donc plus un point bloquant pour la bascule Phase 1 →
+Phase 2 à l'automne.
+
 ---
 
 ## Ce dont j'ai besoin de vous pour avancer
