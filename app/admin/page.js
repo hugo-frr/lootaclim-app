@@ -4,6 +4,7 @@ import {
   BOOKING_STATUS,
   UNIT_STATUS,
   DELIVERY_STATUS,
+  DEPOSIT_STATUS,
 } from "../../lib/constants";
 import { toDay } from "../../lib/dates";
 import { unitAssignmentError } from "../../lib/transitions";
@@ -16,6 +17,8 @@ import {
   markDelivery,
   saveUnit,
   checkDepositsNow,
+  releaseDeposit,
+  captureDeposit,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -109,7 +112,7 @@ export default async function Admin({ searchParams }) {
         <table>
           <thead>
             <tr>
-              <th>Réf.</th><th>Client</th><th>Machine</th><th>Du</th><th>Au</th><th>Total</th><th>Statut</th><th>Actions</th>
+              <th>Réf.</th><th>Client</th><th>Machine</th><th>Du</th><th>Au</th><th>Total</th><th>Statut</th><th>Caution</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -122,6 +125,15 @@ export default async function Admin({ searchParams }) {
                 <td>{dateFr(b.endDate)}</td>
                 <td>{euros(b.total)}</td>
                 <td><span className={`pill ${b.status}`}>{BOOKING_STATUS[b.status]}</span></td>
+                <td>
+                  {b.depositAmount > 0 ? (
+                    <span className={`pill deposit-${b.depositStatus}`}>
+                      {DEPOSIT_STATUS[b.depositStatus]}
+                    </span>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </td>
                 <td>
                   <div className="actions-cell">
                     {b.status === "PENDING" && (
@@ -152,6 +164,30 @@ export default async function Admin({ searchParams }) {
                           Annuler
                         </ConfirmSubmit>
                       </form>
+                    )}
+                    {b.status === "RETURNED" && b.depositStatus === "HELD" && (
+                      <>
+                        <form action={releaseDeposit}>
+                          <input type="hidden" name="id" value={b.id} />
+                          <button type="submit" className="btn-small">Libérer caution</button>
+                        </form>
+                        <form action={captureDeposit} className="actions-cell">
+                          <input type="hidden" name="id" value={b.id} />
+                          <input
+                            name="montantEuros"
+                            placeholder="Montant €"
+                            inputMode="decimal"
+                            style={{ width: 90 }}
+                            required
+                          />
+                          <ConfirmSubmit
+                            className="btn-small btn-danger"
+                            message={`Encaisser la caution de ${b.reference} ?`}
+                          >
+                            Encaisser
+                          </ConfirmSubmit>
+                        </form>
+                      </>
                     )}
                   </div>
                 </td>

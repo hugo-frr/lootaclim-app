@@ -83,9 +83,13 @@ td { padding: 12px; border-bottom: 1px solid rgba(63, 182, 224, 0.12); }
 .pill { display: inline-block; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
 .pill.AVAILABLE, .pill.CONFIRMED, .pill.DONE { background: #d9f3e6; color: #1a8c5b; }
 .pill.RENTED, .pill.DELIVERED, .pill.IN_PROGRESS { background: #dcefff; color: var(--deep); }
-.pill.IN_TRANSIT, .pill.SCHEDULED, .pill.PENDING { background: #fff0e0; color: #c76b2e; }
+.pill.IN_TRANSIT, .pill.SCHEDULED, .pill.PENDING, .pill.AWAITING_PAYMENT { background: #fff0e0; color: #c76b2e; }
 .pill.MAINTENANCE, .pill.FAILED, .pill.CANCELLED { background: #ffe1dc; color: #c0392b; }
 .pill.RETIRED, .pill.RETURNED { background: #e8edf1; color: #5c7d94; }
+.pill.deposit-HELD { background: #d9f3e6; color: #1a8c5b; }
+.pill.deposit-CAPTURED { background: #dcefff; color: var(--deep); }
+.pill.deposit-FAILED { background: #ffe1dc; color: #c0392b; }
+.pill.deposit-RELEASED, .pill.deposit-NONE { background: #e8edf1; color: #5c7d94; }
 
 /* Divers */
 .eyebrow { font-size: 12.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--deep); font-weight: 600; }

@@ -11,8 +11,15 @@ import {
   deliveryFailError,
   unitAssignmentError,
   unitStatusChangeError,
+  depositReleaseError,
+  depositCaptureError,
 } from "../../lib/transitions";
-import { placeDepositIfDue, placeDueDeposits } from "../../lib/stripe";
+import {
+  placeDepositIfDue,
+  placeDueDeposits,
+  releaseDepositStripe,
+  captureDepositStripe,
+} from "../../lib/stripe";
 import { requireAdmin } from "./auth";
 
 // Toutes les actions suivent le même patron : requireAdmin → transaction qui
@@ -178,4 +185,45 @@ export async function checkDepositsNow() {
   await requireAdmin();
   const { failed } = await placeDueDeposits();
   finish("/admin", failed > 0 ? `${failed} caution(s) n'ont pas pu être posées — vérifiez le tableau.` : null);
+}
+
+export async function releaseDeposit(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  let error = booking ? depositReleaseError(booking) : "Réservation introuvable.";
+  if (!error) {
+    try {
+      await releaseDepositStripe(booking);
+    } catch {
+      error = "La libération Stripe a échoué : réessayez dans un instant.";
+    }
+  }
+  if (!error) {
+    await prisma.booking.update({ where: { id }, data: { depositStatus: "RELEASED" } });
+  }
+  finish("/admin", error);
+}
+
+export async function captureDeposit(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const amountEuros = Number(String(formData.get("montantEuros") ?? "").replace(",", "."));
+  const amountCents = Math.round(amountEuros * 100);
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  let error = booking ? depositCaptureError(booking, amountCents) : "Réservation introuvable.";
+  if (!error) {
+    try {
+      await captureDepositStripe(booking, amountCents);
+    } catch {
+      error = "L'encaissement Stripe a échoué : réessayez dans un instant.";
+    }
+  }
+  if (!error) {
+    await prisma.booking.update({
+      where: { id },
+      data: { depositStatus: "CAPTURED", capturedAmount: amountCents },
+    });
+  }
+  finish("/admin", error);
 }
