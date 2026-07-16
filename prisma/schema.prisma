@@ -52,6 +52,15 @@ model Unit {
   bookings     Booking[]
 }
 
+// Un kit de calfeutrage physique — universel, pas lié à un modèle précis.
+model Kit {
+  id           String    @id @default(cuid())
+  serialNumber String    @unique
+  status       String    @default("AVAILABLE") // AVAILABLE | RENTED | MAINTENANCE | RETIRED
+  notes        String?
+  bookings     Booking[]
+}
+
 model Customer {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -88,6 +97,8 @@ model Booking {
   productId   String
   unit        Unit?      @relation(fields: [unitId], references: [id])
   unitId      String?
+  kit         Kit?       @relation(fields: [kitId], references: [id])
+  kitId       String?
   startDate   DateTime
   endDate     DateTime
   status      String     @default("AWAITING_PAYMENT")
