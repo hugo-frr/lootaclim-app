@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { capacity, fullDays, minStartDay } from "../../../lib/availability";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
+import { cancelAbandonedCheckout } from "../../../lib/stripe";
 import BookingWizard from "./BookingWizard";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,13 @@ export default async function Reserver({ params, searchParams }) {
     include: { units: true },
   });
   if (!product || !product.active) notFound();
+
+  // Le client a annulé son paiement Stripe (bouton "retour") : on libère ses
+  // dates tout de suite au lieu d'attendre l'expiration automatique (32
+  // min), pour que le calendrier ci-dessous reflète la vraie disponibilité.
+  if (searchParams.annule && searchParams.session_id) {
+    await cancelAbandonedCheckout(String(searchParams.session_id));
+  }
 
   const cap = capacity(product.units);
   const now = nowInParis();
