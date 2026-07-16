@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { capacity, fullDays, minStartDay } from "../../../lib/availability";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
-import { cancelAbandonedCheckout } from "../../../lib/stripe";
+import { abandonedBookingId } from "../../../lib/stripe";
 import BookingWizard from "./BookingWizard";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +15,13 @@ export default async function Reserver({ params, searchParams }) {
   });
   if (!product || !product.active) notFound();
 
-  // Le client a annulé son paiement Stripe (bouton "retour") : on libère ses
-  // dates tout de suite au lieu d'attendre l'expiration automatique (32
-  // min), pour que le calendrier ci-dessous reflète la vraie disponibilité.
+  // Le client a annulé son paiement Stripe (bouton "retour") : sa réservation
+  // "paiement en cours" reste en base (elle expirera normalement via le
+  // webhook Stripe ou la tâche planifiée), mais on l'exclut de SON calendrier
+  // pour qu'il voie tout de suite ses dates redevenir choisissables.
+  let hiddenBookingId = null;
   if (searchParams.annule && searchParams.session_id) {
-    await cancelAbandonedCheckout(String(searchParams.session_id));
+    hiddenBookingId = await abandonedBookingId(String(searchParams.session_id));
   }
 
   const cap = capacity(product.units);
@@ -32,6 +34,7 @@ export default async function Reserver({ params, searchParams }) {
       where: {
         productId: product.id,
         NOT: { status: "AWAITING_PAYMENT", checkoutExpiresAt: { lt: new Date() } },
+        ...(hiddenBookingId ? { id: { not: hiddenBookingId } } : {}),
       },
       select: { startDate: true, endDate: true, status: true },
     })
