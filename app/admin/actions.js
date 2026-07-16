@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma";
 import { toDay } from "../../lib/dates";
+import { slugify } from "../../lib/slug";
 import {
   confirmError,
   cancelError,
@@ -274,4 +275,67 @@ export async function captureDeposit(formData) {
     });
   }
   finish("/admin", error);
+}
+
+export async function createProduct(formData) {
+  await requireAdmin();
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const powerKw = Number(String(formData.get("powerKw") ?? "").replace(",", "."));
+  const noiseDb = Number(String(formData.get("noiseDb") ?? ""));
+  const maxAreaM2 = Number(String(formData.get("maxAreaM2") ?? ""));
+  const priceEuros = Number(String(formData.get("dailyPriceEuros") ?? "").replace(",", "."));
+  const depositEuros = Number(String(formData.get("depositAmountEuros") ?? "").replace(",", "."));
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+  const active = formData.get("active") === "oui";
+
+  let error = null;
+  if (name.length < 2 || name.length > 60) {
+    error = "Le nom doit faire entre 2 et 60 caractères.";
+  } else if (description.length < 10 || description.length > 500) {
+    error = "La description doit faire entre 10 et 500 caractères.";
+  } else if (!Number.isFinite(powerKw) || powerKw < 0.1 || powerKw > 20) {
+    error = "La puissance doit être comprise entre 0,1 et 20 kW.";
+  } else if (!Number.isInteger(noiseDb) || noiseDb < 20 || noiseDb > 90) {
+    error = "Le bruit doit être un nombre entier entre 20 et 90 dB.";
+  } else if (!Number.isInteger(maxAreaM2) || maxAreaM2 < 1 || maxAreaM2 > 300) {
+    error = "La surface max doit être un nombre entier entre 1 et 300 m².";
+  } else if (!Number.isFinite(priceEuros) || priceEuros < 1 || priceEuros > 500) {
+    error = "Le prix par jour doit être compris entre 1 € et 500 €.";
+  } else if (!Number.isFinite(depositEuros) || depositEuros < 0 || depositEuros > 2000) {
+    error = "La caution doit être comprise entre 0 € et 2000 €.";
+  } else if (imageUrl.length > 500) {
+    error = "Le lien d'image est trop long.";
+  }
+
+  if (!error) {
+    const base = slugify(name) || "modele";
+    let slug = base;
+    let n = 2;
+    while (await prisma.product.findUnique({ where: { slug }, select: { id: true } })) {
+      slug = `${base}-${n}`;
+      n += 1;
+    }
+
+    await prisma.product.create({
+      data: {
+        slug,
+        name,
+        description,
+        powerKw,
+        noiseDb,
+        maxAreaM2,
+        dailyPrice: Math.round(priceEuros * 100),
+        depositAmount: Math.round(depositEuros * 100),
+        active,
+        images: imageUrl
+          ? { create: [{ url: imageUrl, alt: `Climatiseur ${name} vue de face`, position: 0 }] }
+          : undefined,
+      },
+    });
+  }
+
+  revalidatePath("/admin/produits");
+  revalidatePath("/catalogue");
+  redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
 }
