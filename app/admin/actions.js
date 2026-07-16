@@ -339,3 +339,28 @@ export async function createProduct(formData) {
   revalidatePath("/catalogue");
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
 }
+
+export async function createUnit(formData) {
+  await requireAdmin();
+  const productId = String(formData.get("productId") ?? "");
+  const serialNumber = String(formData.get("serialNumber") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
+
+  let error = null;
+  if (serialNumber.length < 3 || serialNumber.length > 40) {
+    error = "Le numéro de série doit faire entre 3 et 40 caractères.";
+  } else {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      error = "Modèle introuvable.";
+    } else {
+      try {
+        await prisma.unit.create({ data: { productId, serialNumber, notes: notes || null } });
+      } catch (e) {
+        if (e.code !== "P2002") throw e;
+        error = "Ce numéro de série existe déjà.";
+      }
+    }
+  }
+  finish("/admin", error);
+}

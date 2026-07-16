@@ -16,6 +16,7 @@ import {
   assignUnit,
   markDelivery,
   saveUnit,
+  createUnit,
   checkDepositsNow,
   releaseDeposit,
   captureDeposit,
@@ -46,7 +47,7 @@ function eligibleUnits(booking, units) {
 const MANUAL_STATUSES = ["AVAILABLE", "MAINTENANCE", "RETIRED"];
 
 export default async function Admin({ searchParams }) {
-  const [bookings, units, deliveries, customerCount] = await Promise.all([
+  const [bookings, units, deliveries, customerCount, products] = await Promise.all([
     prisma.booking.findMany({
       include: { customer: true, product: true, unit: { include: { product: true } } },
       orderBy: { createdAt: "desc" },
@@ -66,6 +67,7 @@ export default async function Admin({ searchParams }) {
       take: 10,
     }),
     prisma.customer.count(),
+    prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
 
   const caConfirme = bookings
@@ -231,6 +233,17 @@ export default async function Admin({ searchParams }) {
 
       <div className="card">
         <h2 style={{ marginBottom: 16 }}>Parc machines</h2>
+        <form action={createUnit} className="actions-cell" style={{ marginBottom: 14 }}>
+          <select name="productId" required defaultValue="">
+            <option value="" disabled>Modèle…</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <input name="serialNumber" placeholder="N° de série" required minLength={3} maxLength={40} />
+          <input name="notes" placeholder="Notes…" maxLength={500} />
+          <button type="submit" className="btn-small">Nouvelle machine</button>
+        </form>
         <table>
           <thead>
             <tr><th>N° série</th><th>Modèle</th><th>Statut</th><th>Gestion</th></tr>
