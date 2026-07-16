@@ -3,20 +3,24 @@ import {
   euros,
   BOOKING_STATUS,
   UNIT_STATUS,
+  KIT_STATUS,
   DELIVERY_STATUS,
   DEPOSIT_STATUS,
 } from "../../lib/constants";
 import { toDay } from "../../lib/dates";
-import { unitAssignmentError } from "../../lib/transitions";
+import { unitAssignmentError, kitAssignmentError } from "../../lib/transitions";
 import AdminHeader from "./AdminHeader";
 import ConfirmSubmit from "./ConfirmSubmit";
 import {
   confirmBooking,
   cancelBooking,
   assignUnit,
+  assignKit,
   markDelivery,
   saveUnit,
   createUnit,
+  createKit,
+  saveKit,
   checkDepositsNow,
   releaseDeposit,
   captureDeposit,
@@ -44,18 +48,45 @@ function eligibleUnits(booking, units) {
   });
 }
 
+// Kits proposables pour une réservation : disponibles et libres sur les
+// dates (pas de contrainte de modèle, un kit est universel).
+function eligibleKits(booking, kits) {
+  const b = {
+    status: booking.status,
+    startDay: toDay(booking.startDate),
+    endDay: toDay(booking.endDate),
+  };
+  return kits.filter((k) => {
+    const others = k.bookings
+      .filter((x) => x.id !== booking.id)
+      .map((x) => ({ startDay: toDay(x.startDate), endDay: toDay(x.endDate), status: x.status }));
+    return kitAssignmentError(b, k, others) === null;
+  });
+}
+
 const MANUAL_STATUSES = ["AVAILABLE", "MAINTENANCE", "RETIRED"];
 
 export default async function Admin({ searchParams }) {
-  const [bookings, units, deliveries, customerCount, products] = await Promise.all([
+  const [bookings, units, kits, deliveries, customerCount, products] = await Promise.all([
     prisma.booking.findMany({
-      include: { customer: true, product: true, unit: { include: { product: true } } },
+      include: {
+        customer: true,
+        product: true,
+        unit: { include: { product: true } },
+        kit: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
     prisma.unit.findMany({
       include: {
         product: true,
+        bookings: { select: { id: true, startDate: true, endDate: true, status: true } },
+      },
+      orderBy: { serialNumber: "asc" },
+    }),
+    prisma.kit.findMany({
+      include: {
         bookings: { select: { id: true, startDate: true, endDate: true, status: true } },
       },
       orderBy: { serialNumber: "asc" },
@@ -150,6 +181,22 @@ export default async function Admin({ searchParams }) {
                         </select>
                         <button type="submit" className="btn-small">Affecter</button>
                       </form>
+                    )}
+                    {["PENDING", "CONFIRMED"].includes(b.status) && (
+                      b.kitId ? (
+                        <span className="muted">Kit : {b.kit.serialNumber}</span>
+                      ) : (
+                        <form action={assignKit}>
+                          <input type="hidden" name="bookingId" value={b.id} />
+                          <select name="kitId" required defaultValue="">
+                            <option value="" disabled>Kit…</option>
+                            {eligibleKits(b, kits).map((k) => (
+                              <option key={k.id} value={k.id}>{k.serialNumber}</option>
+                            ))}
+                          </select>
+                          <button type="submit" className="btn-small">Affecter kit</button>
+                        </form>
+                      )
                     )}
                     {["PENDING", "CONFIRMED"].includes(b.status) && (
                       <form action={cancelBooking}>
@@ -264,6 +311,44 @@ export default async function Admin({ searchParams }) {
                         ))}
                       </select>
                       <input name="notes" defaultValue={u.notes ?? ""} placeholder="Notes…" maxLength={500} />
+                      <button type="submit" className="btn-small">Enregistrer</button>
+                    </form>
+                  ) : (
+                    <span className="muted">piloté par les livraisons (reprise à marquer)</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginBottom: 16 }}>Kits de calfeutrage</h2>
+        <form action={createKit} className="actions-cell" style={{ marginBottom: 14 }}>
+          <input name="serialNumber" placeholder="N° de kit" required maxLength={40} />
+          <input name="notes" placeholder="Notes…" maxLength={500} />
+          <button type="submit" className="btn-small">Nouveau kit</button>
+        </form>
+        <table>
+          <thead>
+            <tr><th>N° kit</th><th>Statut</th><th>Gestion</th></tr>
+          </thead>
+          <tbody>
+            {kits.map((k) => (
+              <tr key={k.id}>
+                <td>{k.serialNumber}</td>
+                <td><span className={`pill ${k.status}`}>{KIT_STATUS[k.status]}</span></td>
+                <td>
+                  {MANUAL_STATUSES.includes(k.status) ? (
+                    <form action={saveKit} className="actions-cell">
+                      <input type="hidden" name="id" value={k.id} />
+                      <select name="statut" defaultValue={k.status}>
+                        {MANUAL_STATUSES.map((s) => (
+                          <option key={s} value={s}>{KIT_STATUS[s]}</option>
+                        ))}
+                      </select>
+                      <input name="notes" defaultValue={k.notes ?? ""} placeholder="Notes…" maxLength={500} />
                       <button type="submit" className="btn-small">Enregistrer</button>
                     </form>
                   ) : (

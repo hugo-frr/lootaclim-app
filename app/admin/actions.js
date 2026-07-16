@@ -14,6 +14,8 @@ import {
   unitStatusChangeError,
   depositReleaseError,
   depositCaptureError,
+  kitAssignmentError,
+  kitStatusChangeError,
 } from "../../lib/transitions";
 import {
   placeDepositIfDue,
@@ -169,6 +171,9 @@ export async function markDelivery(formData) {
         where: { id: delivery.booking.unitId },
         data: { status: effects.unit },
       });
+      if (effects.kit) {
+        await tx.kit.update({ where: { id: delivery.booking.kitId }, data: { status: effects.kit } });
+      }
     },
     { isolationLevel: "Serializable" }
   );
@@ -362,5 +367,78 @@ export async function createUnit(formData) {
       }
     }
   }
+  finish("/admin", error);
+}
+
+export async function createKit(formData) {
+  await requireAdmin();
+  const serialNumber = String(formData.get("serialNumber") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
+
+  let error = null;
+  if (serialNumber.length < 1 || serialNumber.length > 40) {
+    error = "Le numéro du kit doit faire entre 1 et 40 caractères.";
+  } else {
+    try {
+      await prisma.kit.create({ data: { serialNumber, notes: notes || null } });
+    } catch (e) {
+      if (e.code !== "P2002") throw e;
+      error = "Ce numéro de kit existe déjà.";
+    }
+  }
+  finish("/admin", error);
+}
+
+export async function saveKit(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const statut = String(formData.get("statut") ?? "");
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
+  let error = null;
+  await prisma.$transaction(async (tx) => {
+    const kit = await tx.kit.findUnique({ where: { id } });
+    if (!kit) {
+      error = "Kit introuvable.";
+      return;
+    }
+    error = kitStatusChangeError(kit, statut);
+    if (error) return;
+    await tx.kit.update({ where: { id }, data: { status: statut, notes: notes || null } });
+  });
+  finish("/admin", error);
+}
+
+export async function assignKit(formData) {
+  await requireAdmin();
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const kitId = String(formData.get("kitId") ?? "");
+  let error = null;
+  await prisma.$transaction(
+    async (tx) => {
+      const booking = await tx.booking.findUnique({ where: { id: bookingId } });
+      const kit = await tx.kit.findUnique({
+        where: { id: kitId },
+        include: {
+          bookings: { select: { id: true, startDate: true, endDate: true, status: true } },
+        },
+      });
+      if (!booking || !kit) {
+        error = "Réservation ou kit introuvable.";
+        return;
+      }
+      const b = {
+        status: booking.status,
+        startDay: toDay(booking.startDate),
+        endDay: toDay(booking.endDate),
+      };
+      const others = kit.bookings
+        .filter((x) => x.id !== booking.id)
+        .map((x) => ({ startDay: toDay(x.startDate), endDay: toDay(x.endDate), status: x.status }));
+      error = kitAssignmentError(b, kit, others);
+      if (error) return;
+      await tx.booking.update({ where: { id: bookingId }, data: { kitId } });
+    },
+    { isolationLevel: "Serializable" }
+  );
   finish("/admin", error);
 }
