@@ -104,11 +104,6 @@ export default async function Admin({ searchParams }) {
 
       <div className="card">
         <h2 style={{ marginBottom: 16 }}>Réservations récentes</h2>
-        <form action={checkDepositsNow} style={{ marginBottom: 14 }}>
-          <button type="submit" className="btn-small">
-            Vérifier les cautions à poser aujourd&apos;hui
-          </button>
-        </form>
         <table>
           <thead>
             <tr>
