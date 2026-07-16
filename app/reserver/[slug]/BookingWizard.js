@@ -147,6 +147,15 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
                 <label htmlFor="accessCode">Code d'accès (facultatif)</label>
                 <input id="accessCode" name="accessCode" />
               </div>
+              <div className="field full">
+                <label
+                  htmlFor="wantsKit"
+                  style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}
+                >
+                  <input type="checkbox" id="wantsKit" name="wantsKit" style={{ width: "auto" }} />
+                  Je souhaite un kit de calfeutrage (inclus, sans supplément)
+                </label>
+              </div>
               <div className="field">
                 <label htmlFor="deliverySlot">Livraison le {dateFr(startDay)}</label>
                 <select

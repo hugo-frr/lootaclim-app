@@ -8,6 +8,7 @@ import { capacity, fullDays, rangeError, minStartDay } from "../../../lib/availa
 import { quote } from "../../../lib/pricing";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
 import { createCheckoutSession, ensureStripeCustomer } from "../../../lib/stripe";
+import { kitAssignmentError } from "../../../lib/transitions";
 
 // Nombre de tentatives en cas de conflit d'écriture strictement simultané
 // (collision de référence P2002, conflit de sérialisation P2034).
@@ -38,6 +39,7 @@ export async function createBooking(prevState, formData) {
   const checked = validateBookingForm(Object.fromEntries(formData), now);
   if (checked.error) return { error: checked.error };
   const f = checked.data;
+  const wantsKit = formData.get("wantsKit") === "on";
 
   const minDay = minStartDay(now);
   const maxDay = addMonths(now.day, 3);
@@ -134,6 +136,31 @@ export async function createBooking(prevState, formData) {
           const next = last ? Number(last.reference.split("-").pop()) + 1 : 1;
           const ref = `LC-${year}-${String(next).padStart(4, "0")}`;
 
+          // Si le client a coché "kit de calfeutrage", on affecte
+          // automatiquement le premier kit disponible et libre sur ces
+          // dates — inclus, sans supplément. Vous pourrez le changer depuis
+          // le back-office. Aucun kit libre : la réservation se fait quand
+          // même, à affecter plus tard.
+          let kitId = null;
+          if (wantsKit) {
+            const kits = await tx.kit.findMany({
+              where: { status: "AVAILABLE" },
+              include: {
+                bookings: { select: { id: true, startDate: true, endDate: true, status: true } },
+              },
+            });
+            const kitBooking = { status: "PENDING", startDay: f.startDay, endDay: f.endDay };
+            const eligible = kits.find((k) => {
+              const others = k.bookings.map((x) => ({
+                startDay: toDay(x.startDate),
+                endDay: toDay(x.endDate),
+                status: x.status,
+              }));
+              return kitAssignmentError(kitBooking, k, others) === null;
+            });
+            if (eligible) kitId = eligible.id;
+          }
+
           const booking = await tx.booking.create({
             data: {
               reference: ref,
@@ -150,6 +177,7 @@ export async function createBooking(prevState, formData) {
               floorFee: q.floorFee,
               total: q.total,
               depositAmount: product.depositAmount,
+              kitId,
               deliveries: {
                 create: [
                   { type: "DROPOFF", date: new Date(f.startDay), timeSlot: f.deliverySlot },

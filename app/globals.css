@@ -164,6 +164,7 @@ footer { text-align: center; padding: 34px 20px; color: #7b98ab; font-size: 13px
 .btn-danger { background: #ffe1dc; color: #c0392b; }
 .actions-cell { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .actions-cell form { display: flex; gap: 6px; align-items: center; }
+.actions-cell.actions-cell-stacked { flex-direction: column; align-items: flex-start; gap: 10px; }
 .actions-cell select, .actions-cell input { padding: 6px 8px; border: 1px solid rgba(63, 182, 224, 0.35); border-radius: 8px; font-size: 12.5px; font-family: inherit; background: #fff; color: var(--navy); }
 .form-ok { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #d9f3e6; color: #1a8c5b; font-size: 13.5px; }
 .muted { color: #7b98ab; font-size: 12.5px; font-weight: 400; }

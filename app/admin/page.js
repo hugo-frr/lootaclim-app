@@ -140,7 +140,7 @@ export default async function Admin({ searchParams }) {
         <table>
           <thead>
             <tr>
-              <th>Réf.</th><th>Client</th><th>Machine</th><th>Du</th><th>Au</th><th>Total</th><th>Statut</th><th>Caution</th><th>Actions</th>
+              <th>Réf.</th><th>Client</th><th>Machine</th><th>Kit</th><th>Du</th><th>Au</th><th>Total</th><th>Statut</th><th>Caution</th><th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -149,6 +149,24 @@ export default async function Admin({ searchParams }) {
                 <td>{b.reference}</td>
                 <td>{b.customer.firstName} {b.customer.lastName}</td>
                 <td>{b.unit ? `${b.unit.product.name} · ${b.unit.serialNumber}` : `${b.product.name} · — à affecter —`}</td>
+                <td>
+                  {b.kitId ? (
+                    b.kit.serialNumber
+                  ) : ["PENDING", "CONFIRMED"].includes(b.status) ? (
+                    <form action={assignKit} className="actions-cell">
+                      <input type="hidden" name="bookingId" value={b.id} />
+                      <select name="kitId" required defaultValue="">
+                        <option value="" disabled>Kit…</option>
+                        {eligibleKits(b, kits).map((k) => (
+                          <option key={k.id} value={k.id}>{k.serialNumber}</option>
+                        ))}
+                      </select>
+                      <button type="submit" className="btn-small">Affecter</button>
+                    </form>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </td>
                 <td>{dateFr(b.startDate)}</td>
                 <td>{dateFr(b.endDate)}</td>
                 <td>{euros(b.total)}</td>
@@ -163,7 +181,7 @@ export default async function Admin({ searchParams }) {
                   )}
                 </td>
                 <td>
-                  <div className="actions-cell">
+                  <div className="actions-cell actions-cell-stacked">
                     {b.status === "PENDING" && (
                       <form action={confirmBooking}>
                         <input type="hidden" name="id" value={b.id} />
@@ -181,22 +199,6 @@ export default async function Admin({ searchParams }) {
                         </select>
                         <button type="submit" className="btn-small">Affecter</button>
                       </form>
-                    )}
-                    {["PENDING", "CONFIRMED"].includes(b.status) && (
-                      b.kitId ? (
-                        <span className="muted">Kit : {b.kit.serialNumber}</span>
-                      ) : (
-                        <form action={assignKit}>
-                          <input type="hidden" name="bookingId" value={b.id} />
-                          <select name="kitId" required defaultValue="">
-                            <option value="" disabled>Kit…</option>
-                            {eligibleKits(b, kits).map((k) => (
-                              <option key={k.id} value={k.id}>{k.serialNumber}</option>
-                            ))}
-                          </select>
-                          <button type="submit" className="btn-small">Affecter kit</button>
-                        </form>
-                      )
                     )}
                     {["PENDING", "CONFIRMED"].includes(b.status) && (
                       <form action={cancelBooking}>
