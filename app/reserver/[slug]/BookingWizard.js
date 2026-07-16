@@ -255,6 +255,13 @@ export default function BookingWizard({ product, fullDays, minDay, maxDay }) {
               <span>Total</span>
               <span>{euros(q.total)}</span>
             </div>
+            {product.depositAmount > 0 && (
+              <p style={{ marginTop: 10, fontSize: 12.5, color: "#5c7d94" }}>
+                Une caution de {euros(product.depositAmount)} sera bloquée sur
+                votre carte juste avant la livraison (non débitée sauf dégât
+                constaté).
+              </p>
+            )}
             <SubmitButton />
             <p style={{ marginTop: 10, fontSize: 12.5, color: "#5c7d94" }}>
               Paiement sécurisé par Stripe. Vous allez être redirigé vers une

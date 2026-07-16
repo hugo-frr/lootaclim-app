@@ -59,6 +59,7 @@ export default async function Reserver({ params, searchParams }) {
               slug: product.slug,
               name: product.name,
               dailyPrice: product.dailyPrice,
+              depositAmount: product.depositAmount,
               maxAreaM2: product.maxAreaM2,
               powerKw: product.powerKw,
               noiseDb: product.noiseDb,
