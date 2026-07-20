@@ -24,8 +24,8 @@ npm run dev          # démarre le site
 
 | URL | Description |
 |---|---|
-| `/` | Accueil (la vitrine 3D sera intégrée ici plus tard) |
-| `/catalogue` | Catalogue avec disponibilité en temps réel depuis la base |
+| `/` | Accueil — vitrine complète (hero, comment ça marche, catalogue des modèles avec disponibilité en temps réel sous `#modeles`, réassurance) |
+| `/catalogue` | N'existe plus — redirige (308) vers `/#modeles` |
 | `/reserver/<modèle>` | Tunnel de réservation : calendrier de disponibilité, coordonnées, récapitulatif |
 | `/reserver/confirmation/<réf>` | Confirmation d'une demande de réservation, une fois le paiement Stripe validé |
 | `/admin` | Back-office (protégé par mot de passe) : demandes, livraisons, parc machines |
@@ -148,13 +148,15 @@ réservation du client n'est jamais bloquée par un problème d'email).
 ```
 lootaclim-app/
 ├── app/                  ← les pages du site
-│   ├── page.js           ← accueil
-│   ├── catalogue/        ← catalogue public
+│   ├── page.js           ← accueil = catalogue complet (section #modeles)
+│   ├── Reveal.js         ← apparition au scroll (accueil)
+│   ├── ModelPhoto.js     ← photo produit avec repli "photo à venir"
 │   ├── reserver/         ← tunnel de réservation (calendrier, formulaire,
 │   │                        server action, page de confirmation)
 │   ├── admin/            ← back-office
 │   ├── layout.js         ← navigation commune
 │   └── globals.css       ← styles (palette LOOTACLIM)
+├── next.config.js        ← redirection /catalogue → /#modeles
 ├── lib/
 │   ├── prisma.js         ← connexion à la base
 │   ├── constants.js      ← statuts, créneaux et libellés français
