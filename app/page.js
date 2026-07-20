@@ -30,7 +30,7 @@ const REASSURANCE = [
 export default async function Home() {
   const products = await prisma.product.findMany({
     where: { active: true },
-    include: { units: true },
+    include: { units: true, images: { orderBy: { position: "asc" } } },
     orderBy: { dailyPrice: "asc" },
   });
 
@@ -48,7 +48,7 @@ export default async function Home() {
             Louez un climatiseur mobile, livré et installé chez vous. Sans
             travaux, sans engagement, sans transpirer.
           </p>
-          <Link href="/catalogue" className="btn btn-primary" style={{ marginTop: 30, display: "inline-block" }}>
+          <Link href="#modeles" className="btn btn-primary" style={{ marginTop: 30, display: "inline-block" }}>
             Voir les climatiseurs
           </Link>
         </div>
@@ -83,32 +83,43 @@ export default async function Home() {
       </Reveal>
 
       <Reveal className="home-section">
-        <span className="eyebrow">Nos modèles</span>
-        <h2 className="section-title">Choisissez votre fraîcheur</h2>
-        <div className="grid3">
-          {products.map((p) => {
+        <div id="modeles">
+          <span className="eyebrow">Nos modèles</span>
+          <h2 className="section-title">Choisissez votre fraîcheur</h2>
+          {products.map((p, i) => {
             const dispo = p.units.filter((u) => u.status === "AVAILABLE").length;
+            const reservable = p.units.some((u) => !["RETIRED", "MAINTENANCE"].includes(u.status));
+            const photo = p.images[0];
             return (
-              <Link
-                href={`/reserver/${p.slug}`}
-                key={p.id}
-                className="card product-card"
-                style={{ display: "block", textDecoration: "none", color: "inherit" }}
-              >
-                <div className="ph">📷 {p.name}</div>
-                <h3>{p.name}</h3>
-                <div className="specs">Jusqu&apos;à {p.maxAreaM2} m²</div>
-                <div className="price">
-                  {euros(p.dailyPrice)} <small>/ jour</small>
+              <div className={`model-row ${i % 2 === 1 ? "rev" : ""}`} key={p.id}>
+                <div className={`model-photo${photo ? "" : " placeholder"}`}>
+                  {photo ? <img src={photo.url} alt={photo.alt} /> : "Photo à venir"}
                 </div>
-                <p style={{ marginTop: 10 }}>
-                  {dispo > 0 ? (
-                    <span className="stock-ok">✓ {dispo} disponible{dispo > 1 ? "s" : ""}</span>
-                  ) : (
-                    <span className="stock-ko">Indisponible actuellement</span>
+                <div className="model-info">
+                  <h3>{p.name}</h3>
+                  <div className="model-badges">
+                    <span className="model-badge">Jusqu&apos;à {p.maxAreaM2} m²</span>
+                    <span className="model-badge">{p.powerKw} kW</span>
+                    <span className="model-badge">{p.noiseDb} dB</span>
+                  </div>
+                  <p className="desc">{p.description}</p>
+                  <div className="price">
+                    {euros(p.dailyPrice)} <small>/ jour</small>
+                  </div>
+                  <p className="avail">
+                    {dispo > 0 ? (
+                      <span className="stock-ok">✓ {dispo} disponible{dispo > 1 ? "s" : ""}</span>
+                    ) : (
+                      <span className="stock-ko">Indisponible actuellement</span>
+                    )}
+                  </p>
+                  {reservable && (
+                    <Link href={`/reserver/${p.slug}`} className="btn btn-primary">
+                      Réserver
+                    </Link>
                   )}
-                </p>
-              </Link>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -130,7 +141,7 @@ export default async function Home() {
         <h2 className="section-title" style={{ fontSize: 28 }}>
           Prêt à retrouver la fraîcheur ?
         </h2>
-        <Link href="/catalogue" className="btn btn-primary">
+        <Link href="#modeles" className="btn btn-primary">
           Voir les climatiseurs
         </Link>
       </Reveal>
