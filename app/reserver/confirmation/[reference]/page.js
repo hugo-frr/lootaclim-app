@@ -113,7 +113,7 @@ export default async function Confirmation({ params, searchParams }) {
       </div>
 
       <p style={{ textAlign: "center", marginTop: 22 }}>
-        <Link href="/catalogue" className="btn btn-primary">
+        <Link href="/#modeles" className="btn btn-primary">
           Retour au catalogue
         </Link>
       </p>

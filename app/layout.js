@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
             LOOTA<em>CLIM</em>
           </Link>
           <div className="navlinks">
-            <Link href="/catalogue">Catalogue</Link>
+            <Link href="/#modeles">Catalogue</Link>
           </div>
         </nav>
         <main>{children}</main>

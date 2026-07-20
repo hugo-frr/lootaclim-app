@@ -55,7 +55,7 @@ export default async function Reserver({ params, searchParams }) {
         <div className="card">
           <p>
             Ce modèle n&apos;est pas réservable pour le moment.{" "}
-            <Link href="/catalogue">Voir les autres modèles</Link>.
+            <Link href="/#modeles">Voir les autres modèles</Link>.
           </p>
         </div>
       ) : (

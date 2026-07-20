@@ -283,7 +283,7 @@ export async function updateProduct(formData) {
     }
   }
   revalidatePath("/admin/produits");
-  revalidatePath("/catalogue");
+  revalidatePath("/");
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
 }
 
@@ -393,7 +393,7 @@ export async function createProduct(formData) {
   }
 
   revalidatePath("/admin/produits");
-  revalidatePath("/catalogue");
+  revalidatePath("/");
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
 }
 
