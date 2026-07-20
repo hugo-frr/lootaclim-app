@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "../lib/prisma";
 import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
+import ModelPhoto from "./ModelPhoto";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -92,9 +93,7 @@ export default async function Home() {
             const photo = p.images[0];
             return (
               <div className={`model-row ${i % 2 === 1 ? "rev" : ""}`} key={p.id}>
-                <div className={`model-photo${photo ? "" : " placeholder"}`}>
-                  {photo ? <img src={photo.url} alt={photo.alt} /> : "Photo à venir"}
-                </div>
+                <ModelPhoto url={photo?.url} alt={photo?.alt ?? `Climatiseur ${p.name}`} />
                 <div className="model-info">
                   <h3>{p.name}</h3>
                   <div className="model-badges">
