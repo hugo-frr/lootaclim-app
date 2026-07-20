@@ -117,6 +117,32 @@ par blocage de carte ; en attendant une solution (nouveau blocage à
 mi-location, par exemple), soyez attentif avec les locations longues et
 vérifiez la caution manuellement si besoin.
 
+## 📧 Emails de confirmation
+
+Dès qu'un paiement Stripe est confirmé, le client reçoit un email
+récapitulatif de sa réservation (même contenu que la page de confirmation)
+et vous recevez une notification avec les coordonnées du client. À la
+première installation :
+
+1. Créez un compte gratuit sur [resend.com](https://resend.com).
+2. Dans le tableau de bord Resend, ajoutez et vérifiez votre domaine
+   `lootaclim.fr` (`Domains` → `Add Domain`, puis collez les enregistrements
+   DNS fournis chez votre hébergeur de domaine — même principe que pour
+   Netlify). **Sans domaine vérifié, Resend n'autorise l'envoi qu'à
+   l'adresse email de votre propre compte** — utile pour tester, pas pour
+   de vrais clients.
+3. Récupérez une clé API (`API Keys` → `Create API Key`) et collez-la dans
+   `.env` après `RESEND_API_KEY=`.
+4. Une fois le domaine vérifié, remplacez `EMAIL_FROM` par une adresse sur
+   votre domaine, par ex. `LOOTACLIM <reservations@lootaclim.fr>`.
+5. Renseignez `ADMIN_NOTIFICATION_EMAIL` avec l'adresse email où vous
+   voulez recevoir une notification à chaque nouvelle réservation payée.
+
+Tant que `RESEND_API_KEY` n'est pas configurée, le reste du site continue
+de fonctionner normalement — l'envoi d'email est simplement ignoré (un
+message s'affiche dans le terminal en cas d'erreur d'envoi, mais la
+réservation du client n'est jamais bloquée par un problème d'email).
+
 ## 📁 Structure du projet
 
 ```
@@ -136,6 +162,7 @@ lootaclim-app/
 │   ├── pricing.js        ← calcul du devis (dégressif, livraison)
 │   ├── availability.js   ← disponibilité par dates (battement d'1 jour)
 │   ├── validation.js     ← validation serveur du formulaire
+│   ├── email.js          ← email de confirmation (client + notification admin)
 │   └── *.test.js         ← tests de la logique métier (npm test)
 ├── prisma/
 │   ├── schema.prisma     ← LE fichier clé : structure de la base
@@ -149,7 +176,8 @@ lootaclim-app/
 - [x] Étape 2 : tunnel de réservation avec calendrier de disponibilité par dates
 - [x] Étape 3 : authentification (protéger /admin) + formulaires d'édition
 - [x] Étape 4 : paiement Stripe + caution par empreinte
-- [ ] Étape 5 : emails automatiques + factures PDF
+- [x] Étape 5a : email de confirmation automatique (client + notification admin)
+- [ ] Étape 5b : factures PDF
 - [ ] Étape 6 : intégration de la vitrine 3D + déploiement (Vercel + PostgreSQL)
 
 ## ⚠️ Notes importantes
