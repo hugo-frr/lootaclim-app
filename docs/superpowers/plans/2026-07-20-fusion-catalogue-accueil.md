@@ -38,8 +38,10 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
 ```
+
+(`export default`, pas `module.exports` — `package.json` a `"type": "module"`, `module.exports` casse le build.)
 
 - [ ] **Step 2: Supprimer la page catalogue**
 
