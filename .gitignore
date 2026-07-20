@@ -18,3 +18,4 @@ prisma/dev.db-journal
 
 # Configuration locale de session Claude Code
 .claude/
+.superpowers/
