@@ -17,9 +17,6 @@ export default function RootLayout({ children }) {
           </Link>
           <div className="navlinks">
             <Link href="/catalogue">Catalogue</Link>
-            <Link href="/admin" className="adminlink">
-              Back-office
-            </Link>
           </div>
         </nav>
         <main>{children}</main>
