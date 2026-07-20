@@ -148,11 +148,42 @@ export default async function Admin({ searchParams }) {
               <tr key={b.id}>
                 <td>{b.reference}</td>
                 <td>{b.customer.firstName} {b.customer.lastName}</td>
-                <td>{b.unit ? `${b.unit.product.name} · ${b.unit.serialNumber}` : `${b.product.name} · — à affecter —`}</td>
+                <td>
+                  {b.unit ? (
+                    `${b.unit.product.name} · ${b.unit.serialNumber}`
+                  ) : b.status === "PENDING" ? (
+                    <select name="unitId" form={`confirm-${b.id}`} defaultValue="">
+                      <option value="">— à affecter —</option>
+                      {eligibleUnits(b, units).map((u) => (
+                        <option key={u.id} value={u.id}>{u.serialNumber}</option>
+                      ))}
+                    </select>
+                  ) : b.status === "CONFIRMED" ? (
+                    <form action={assignUnit} className="actions-cell">
+                      <input type="hidden" name="bookingId" value={b.id} />
+                      <select name="unitId" required defaultValue="">
+                        <option value="" disabled>Machine…</option>
+                        {eligibleUnits(b, units).map((u) => (
+                          <option key={u.id} value={u.id}>{u.serialNumber}</option>
+                        ))}
+                      </select>
+                      <button type="submit" className="btn-small">Affecter</button>
+                    </form>
+                  ) : (
+                    <span className="muted">{b.product.name} · — à affecter —</span>
+                  )}
+                </td>
                 <td>
                   {b.kitId ? (
                     b.kit.serialNumber
-                  ) : ["PENDING", "CONFIRMED"].includes(b.status) ? (
+                  ) : b.status === "PENDING" ? (
+                    <select name="kitId" form={`confirm-${b.id}`} defaultValue="">
+                      <option value="">— aucun —</option>
+                      {eligibleKits(b, kits).map((k) => (
+                        <option key={k.id} value={k.id}>{k.serialNumber}</option>
+                      ))}
+                    </select>
+                  ) : b.status === "CONFIRMED" ? (
                     <form action={assignKit} className="actions-cell">
                       <input type="hidden" name="bookingId" value={b.id} />
                       <select name="kitId" required defaultValue="">
@@ -183,21 +214,9 @@ export default async function Admin({ searchParams }) {
                 <td>
                   <div className="actions-cell actions-cell-stacked">
                     {b.status === "PENDING" && (
-                      <form action={confirmBooking}>
+                      <form id={`confirm-${b.id}`} action={confirmBooking}>
                         <input type="hidden" name="id" value={b.id} />
                         <button type="submit" className="btn-small">Confirmer</button>
-                      </form>
-                    )}
-                    {["PENDING", "CONFIRMED"].includes(b.status) && !b.unitId && (
-                      <form action={assignUnit}>
-                        <input type="hidden" name="bookingId" value={b.id} />
-                        <select name="unitId" required defaultValue="">
-                          <option value="" disabled>Machine…</option>
-                          {eligibleUnits(b, units).map((u) => (
-                            <option key={u.id} value={u.id}>{u.serialNumber}</option>
-                          ))}
-                        </select>
-                        <button type="submit" className="btn-small">Affecter</button>
                       </form>
                     )}
                     {["PENDING", "CONFIRMED"].includes(b.status) && (

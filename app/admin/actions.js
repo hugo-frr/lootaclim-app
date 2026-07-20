@@ -34,16 +34,68 @@ function finish(path, error) {
   redirect(error ? `${path}?erreur=${encodeURIComponent(error)}` : path);
 }
 
+// Confirme la réservation et, si l'admin les a choisis dans la même ligne du
+// tableau, affecte la machine et/ou le kit en un seul clic — plus besoin de
+// confirmer puis d'affecter séparément. Les deux affectations restent
+// facultatives à cette étape (comme avant, on peut affecter plus tard).
 export async function confirmBooking(formData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const unitId = String(formData.get("unitId") ?? "").trim();
+  const kitId = String(formData.get("kitId") ?? "").trim();
   let error = null;
-  await prisma.$transaction(async (tx) => {
-    const booking = await tx.booking.findUnique({ where: { id } });
-    error = booking ? confirmError(booking) : "Réservation introuvable.";
-    if (error) return;
-    await tx.booking.update({ where: { id }, data: { status: "CONFIRMED" } });
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      const booking = await tx.booking.findUnique({ where: { id } });
+      error = booking ? confirmError(booking) : "Réservation introuvable.";
+      if (error) return;
+
+      const data = { status: "CONFIRMED" };
+      const b = {
+        status: booking.status,
+        productId: booking.productId,
+        startDay: toDay(booking.startDate),
+        endDay: toDay(booking.endDate),
+      };
+
+      if (unitId) {
+        const unit = await tx.unit.findUnique({
+          where: { id: unitId },
+          include: { bookings: { select: { id: true, startDate: true, endDate: true, status: true } } },
+        });
+        if (!unit) {
+          error = "Machine introuvable.";
+          return;
+        }
+        const others = unit.bookings
+          .filter((x) => x.id !== booking.id)
+          .map((x) => ({ startDay: toDay(x.startDate), endDay: toDay(x.endDate), status: x.status }));
+        error = unitAssignmentError(b, unit, others);
+        if (error) return;
+        data.unitId = unitId;
+      }
+
+      if (kitId) {
+        const kit = await tx.kit.findUnique({
+          where: { id: kitId },
+          include: { bookings: { select: { id: true, startDate: true, endDate: true, status: true } } },
+        });
+        if (!kit) {
+          error = "Kit introuvable.";
+          return;
+        }
+        const others = kit.bookings
+          .filter((x) => x.id !== booking.id)
+          .map((x) => ({ startDay: toDay(x.startDate), endDay: toDay(x.endDate), status: x.status }));
+        error = kitAssignmentError(b, kit, others);
+        if (error) return;
+        data.kitId = kitId;
+      }
+
+      await tx.booking.update({ where: { id }, data });
+    },
+    { isolationLevel: "Serializable" }
+  );
   if (!error) await placeDepositIfDue(id);
   finish("/admin", error);
 }
