@@ -194,3 +194,10 @@ lootaclim-app/
 - `/api/stripe/webhook` et `/api/cron/deposits` sont des routes techniques
   (pas des pages) : la première reçoit les notifications de paiement Stripe,
   la seconde pose automatiquement les cautions chaque jour.
+- ⚠️ **Photos de modèles (`lib/productImages.js`)** : le glisser-déposer
+  dans `/admin/produits` enregistre les images directement dans
+  `public/images/` sur le disque local. Ça fonctionne en local et sur un
+  serveur Node classique, mais **pas sur Vercel** (système de fichiers non
+  modifiable à l'exécution une fois déployé) — avant la mise en ligne
+  réelle (étape 6), il faudra basculer vers un vrai service de stockage
+  (type Vercel Blob).
