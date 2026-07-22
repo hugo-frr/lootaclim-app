@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { euros } from "../../../lib/constants";
 import AdminHeader from "../AdminHeader";
+import ImageDropzone from "../../ImageDropzone";
 import { updateProduct, createProduct } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function Produits({ searchParams }) {
       {searchParams.ok && (
         <p className="form-ok" role="status">Modifications enregistrées.</p>
       )}
-      <form action={createProduct} className="card">
+      <form action={createProduct} className="card" encType="multipart/form-data">
         <h2 className="step-title">Nouveau modèle</h2>
         <div className="form-grid">
           <div className="field">
@@ -63,8 +64,8 @@ export default async function Produits({ searchParams }) {
             </select>
           </div>
           <div className="field full">
-            <label htmlFor="new-image">Lien d&apos;image (facultatif)</label>
-            <input id="new-image" name="imageUrl" placeholder="/images/mon-modele-1.jpg" maxLength={500} />
+            <label>Photo (facultatif)</label>
+            <ImageDropzone name="image" />
           </div>
         </div>
         <button type="submit" className="btn btn-primary" style={{ marginTop: 14 }}>
@@ -72,7 +73,7 @@ export default async function Produits({ searchParams }) {
         </button>
       </form>
       {products.map((p) => (
-        <form key={p.id} action={updateProduct} className="card">
+        <form key={p.id} action={updateProduct} className="card" encType="multipart/form-data">
           <input type="hidden" name="id" value={p.id} />
           <h2 className="step-title">
             {p.name}{" "}
@@ -119,14 +120,18 @@ export default async function Produits({ searchParams }) {
               </select>
             </div>
             <div className="field full">
-              <label htmlFor={`image-${p.id}`}>Lien d&apos;image (vide = aucune)</label>
-              <input
-                id={`image-${p.id}`}
-                name="imageUrl"
-                defaultValue={p.images[0]?.url ?? ""}
-                placeholder="/images/mon-modele-1.jpg"
-                maxLength={500}
+              <label>Photo</label>
+              <ImageDropzone
+                name="image"
+                currentUrl={p.images[0]?.url}
+                currentAlt={p.images[0]?.alt}
               />
+              {p.images[0] && (
+                <label className="checkbox-field">
+                  <input type="checkbox" name="removeImage" />
+                  Supprimer l&apos;image actuelle
+                </label>
+              )}
             </div>
           </div>
           <button type="submit" className="btn btn-primary" style={{ marginTop: 14 }}>

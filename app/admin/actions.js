@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma";
 import { toDay } from "../../lib/dates";
 import { slugify } from "../../lib/slug";
+import { saveProductImage } from "../../lib/productImages";
 import {
   confirmError,
   cancelError,
@@ -258,7 +259,8 @@ export async function updateProduct(formData) {
   const priceEuros = Number(String(formData.get("dailyPriceEuros") ?? "").replace(",", "."));
   const depositEuros = Number(String(formData.get("depositAmountEuros") ?? "").replace(",", "."));
   const active = formData.get("active") === "oui";
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+  const imageFile = formData.get("image");
+  const removeImage = formData.get("removeImage") === "on";
 
   let error = null;
   if (description.length < 10 || description.length > 500) {
@@ -267,35 +269,46 @@ export async function updateProduct(formData) {
     error = "Le prix par jour doit être compris entre 1 € et 500 €.";
   } else if (!Number.isFinite(depositEuros) || depositEuros < 0 || depositEuros > 2000) {
     error = "La caution doit être comprise entre 0 € et 2000 €.";
-  } else if (imageUrl.length > 500) {
-    error = "Le lien d'image est trop long.";
   } else {
     const exists = await prisma.product.findUnique({ where: { id }, include: { images: true } });
     if (!exists) {
       error = "Modèle introuvable.";
     } else {
-      await prisma.product.update({
-        where: { id },
-        data: {
-          description,
-          dailyPrice: Math.round(priceEuros * 100),
-          depositAmount: Math.round(depositEuros * 100),
-          active,
-        },
-      });
-
       // Un seul visuel par modèle pour l'instant : on met à jour l'image
-      // existante, on en crée une si aucune n'existe, ou on la retire si le
-      // champ est vidé — jamais de deuxième ligne ProductImage en position 0.
-      const existingImage = exists.images[0];
-      if (!imageUrl) {
-        if (existingImage) await prisma.productImage.delete({ where: { id: existingImage.id } });
-      } else if (existingImage) {
-        await prisma.productImage.update({ where: { id: existingImage.id }, data: { url: imageUrl } });
-      } else {
-        await prisma.productImage.create({
-          data: { url: imageUrl, alt: `Climatiseur ${exists.name} vue de face`, position: 0, productId: id },
+      // existante, on en crée une si aucune n'existe, ou on la retire si la
+      // case est cochée — jamais de deuxième ligne ProductImage en position 0.
+      let newImageUrl = null;
+      if (imageFile instanceof File && imageFile.size > 0) {
+        try {
+          newImageUrl = await saveProductImage(imageFile, exists.slug);
+        } catch (e) {
+          error = e.message;
+        }
+      }
+
+      if (!error) {
+        await prisma.product.update({
+          where: { id },
+          data: {
+            description,
+            dailyPrice: Math.round(priceEuros * 100),
+            depositAmount: Math.round(depositEuros * 100),
+            active,
+          },
         });
+
+        const existingImage = exists.images[0];
+        if (newImageUrl) {
+          if (existingImage) {
+            await prisma.productImage.update({ where: { id: existingImage.id }, data: { url: newImageUrl } });
+          } else {
+            await prisma.productImage.create({
+              data: { url: newImageUrl, alt: `Climatiseur ${exists.name} vue de face`, position: 0, productId: id },
+            });
+          }
+        } else if (removeImage && existingImage) {
+          await prisma.productImage.delete({ where: { id: existingImage.id } });
+        }
       }
     }
   }
@@ -360,7 +373,7 @@ export async function createProduct(formData) {
   const maxAreaM2 = Number(String(formData.get("maxAreaM2") ?? ""));
   const priceEuros = Number(String(formData.get("dailyPriceEuros") ?? "").replace(",", "."));
   const depositEuros = Number(String(formData.get("depositAmountEuros") ?? "").replace(",", "."));
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+  const imageFile = formData.get("image");
   const active = formData.get("active") === "oui";
 
   let error = null;
@@ -378,8 +391,6 @@ export async function createProduct(formData) {
     error = "Le prix par jour doit être compris entre 1 € et 500 €.";
   } else if (!Number.isFinite(depositEuros) || depositEuros < 0 || depositEuros > 2000) {
     error = "La caution doit être comprise entre 0 € et 2000 €.";
-  } else if (imageUrl.length > 500) {
-    error = "Le lien d'image est trop long.";
   }
 
   if (!error) {
@@ -391,22 +402,33 @@ export async function createProduct(formData) {
       n += 1;
     }
 
-    await prisma.product.create({
-      data: {
-        slug,
-        name,
-        description,
-        powerKw,
-        noiseDb,
-        maxAreaM2,
-        dailyPrice: Math.round(priceEuros * 100),
-        depositAmount: Math.round(depositEuros * 100),
-        active,
-        images: imageUrl
-          ? { create: [{ url: imageUrl, alt: `Climatiseur ${name} vue de face`, position: 0 }] }
-          : undefined,
-      },
-    });
+    let imageUrl = null;
+    if (imageFile instanceof File && imageFile.size > 0) {
+      try {
+        imageUrl = await saveProductImage(imageFile, slug);
+      } catch (e) {
+        error = e.message;
+      }
+    }
+
+    if (!error) {
+      await prisma.product.create({
+        data: {
+          slug,
+          name,
+          description,
+          powerKw,
+          noiseDb,
+          maxAreaM2,
+          dailyPrice: Math.round(priceEuros * 100),
+          depositAmount: Math.round(depositEuros * 100),
+          active,
+          images: imageUrl
+            ? { create: [{ url: imageUrl, alt: `Climatiseur ${name} vue de face`, position: 0 }] }
+            : undefined,
+        },
+      });
+    }
   }
 
   revalidatePath("/admin/produits");
