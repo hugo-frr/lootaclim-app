@@ -121,27 +121,30 @@ vérifiez la caution manuellement si besoin.
 
 Dès qu'un paiement Stripe est confirmé, le client reçoit un email
 récapitulatif de sa réservation (même contenu que la page de confirmation)
-et vous recevez une notification avec les coordonnées du client. À la
-première installation :
+et vous recevez une notification avec les coordonnées du client. L'envoi
+passe par la boîte mail `lootaclim.fr` créée chez votre hébergeur (LWS), en
+SMTP direct (pas de service tiers). À la première installation :
 
-1. Créez un compte gratuit sur [resend.com](https://resend.com).
-2. Dans le tableau de bord Resend, ajoutez et vérifiez votre domaine
-   `lootaclim.fr` (`Domains` → `Add Domain`, puis collez les enregistrements
-   DNS fournis chez votre hébergeur de domaine — même principe que pour
-   Netlify). **Sans domaine vérifié, Resend n'autorise l'envoi qu'à
-   l'adresse email de votre propre compte** — utile pour tester, pas pour
-   de vrais clients.
-3. Récupérez une clé API (`API Keys` → `Create API Key`) et collez-la dans
-   `.env` après `RESEND_API_KEY=`.
-4. Une fois le domaine vérifié, remplacez `EMAIL_FROM` par une adresse sur
-   votre domaine, par ex. `LOOTACLIM <reservations@lootaclim.fr>`.
-5. Renseignez `ADMIN_NOTIFICATION_EMAIL` avec l'adresse email où vous
-   voulez recevoir une notification à chaque nouvelle réservation payée.
+1. Sur le Panel Client LWS, créez une adresse email si ce n'est pas déjà
+   fait (ex. `reservations@lootaclim.fr`) et notez son mot de passe.
+2. Dans `.env`, renseignez :
+   - `SMTP_HOST=mail.lootaclim.fr`
+   - `SMTP_PORT=465`
+   - `SMTP_USER=` votre adresse email complète
+   - `SMTP_PASSWORD=` son mot de passe
+3. Remplacez `EMAIL_FROM` par cette même adresse, par ex.
+   `LOOTACLIM <reservations@lootaclim.fr>` — la plupart des serveurs SMTP
+   rejettent ou marquent comme suspect un email envoyé "au nom" d'une autre
+   adresse que celle authentifiée.
+4. Renseignez `ADMIN_NOTIFICATION_EMAIL` avec l'adresse email où vous
+   voulez recevoir une notification à chaque nouvelle réservation payée
+   (peut être la même adresse, ou une autre que vous consultez déjà).
 
-Tant que `RESEND_API_KEY` n'est pas configurée, le reste du site continue
-de fonctionner normalement — l'envoi d'email est simplement ignoré (un
-message s'affiche dans le terminal en cas d'erreur d'envoi, mais la
-réservation du client n'est jamais bloquée par un problème d'email).
+Tant que `SMTP_HOST`/`SMTP_USER`/`SMTP_PASSWORD` ne sont pas tous les trois
+configurés, le reste du site continue de fonctionner normalement — l'envoi
+d'email est simplement ignoré (un message s'affiche dans le terminal en cas
+d'erreur d'envoi, mais la réservation du client n'est jamais bloquée par un
+problème d'email).
 
 ## 📁 Structure du projet
 
