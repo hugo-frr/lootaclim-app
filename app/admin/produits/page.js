@@ -6,7 +6,10 @@ import { updateProduct, createProduct } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function Produits({ searchParams }) {
-  const products = await prisma.product.findMany({ orderBy: { dailyPrice: "asc" } });
+  const products = await prisma.product.findMany({
+    include: { images: { orderBy: { position: "asc" } } },
+    orderBy: { dailyPrice: "asc" },
+  });
 
   return (
     <div className="stack">
@@ -114,6 +117,16 @@ export default async function Produits({ searchParams }) {
                 <option value="oui">Oui</option>
                 <option value="non">Non</option>
               </select>
+            </div>
+            <div className="field full">
+              <label htmlFor={`image-${p.id}`}>Lien d&apos;image (vide = aucune)</label>
+              <input
+                id={`image-${p.id}`}
+                name="imageUrl"
+                defaultValue={p.images[0]?.url ?? ""}
+                placeholder="/images/mon-modele-1.jpg"
+                maxLength={500}
+              />
             </div>
           </div>
           <button type="submit" className="btn btn-primary" style={{ marginTop: 14 }}>

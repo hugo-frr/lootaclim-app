@@ -258,6 +258,7 @@ export async function updateProduct(formData) {
   const priceEuros = Number(String(formData.get("dailyPriceEuros") ?? "").replace(",", "."));
   const depositEuros = Number(String(formData.get("depositAmountEuros") ?? "").replace(",", "."));
   const active = formData.get("active") === "oui";
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
 
   let error = null;
   if (description.length < 10 || description.length > 500) {
@@ -266,8 +267,10 @@ export async function updateProduct(formData) {
     error = "Le prix par jour doit être compris entre 1 € et 500 €.";
   } else if (!Number.isFinite(depositEuros) || depositEuros < 0 || depositEuros > 2000) {
     error = "La caution doit être comprise entre 0 € et 2000 €.";
+  } else if (imageUrl.length > 500) {
+    error = "Le lien d'image est trop long.";
   } else {
-    const exists = await prisma.product.findUnique({ where: { id } });
+    const exists = await prisma.product.findUnique({ where: { id }, include: { images: true } });
     if (!exists) {
       error = "Modèle introuvable.";
     } else {
@@ -280,6 +283,20 @@ export async function updateProduct(formData) {
           active,
         },
       });
+
+      // Un seul visuel par modèle pour l'instant : on met à jour l'image
+      // existante, on en crée une si aucune n'existe, ou on la retire si le
+      // champ est vidé — jamais de deuxième ligne ProductImage en position 0.
+      const existingImage = exists.images[0];
+      if (!imageUrl) {
+        if (existingImage) await prisma.productImage.delete({ where: { id: existingImage.id } });
+      } else if (existingImage) {
+        await prisma.productImage.update({ where: { id: existingImage.id }, data: { url: imageUrl } });
+      } else {
+        await prisma.productImage.create({
+          data: { url: imageUrl, alt: `Climatiseur ${exists.name} vue de face`, position: 0, productId: id },
+        });
+      }
     }
   }
   revalidatePath("/admin/produits");
