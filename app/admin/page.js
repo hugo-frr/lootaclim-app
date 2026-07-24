@@ -89,10 +89,13 @@ function compareBookings(a, b) {
   return (ka < kb ? -1 : 1) * (desc ? -1 : 1);
 }
 
-// Prête à livrer : caution pas due maintenant (pas encore le moment) ou
-// déjà posée/absente — sinon "Poser la caution" doit passer avant.
-function readyToDeliver(b, depositReady) {
-  return !(b.depositAmount > 0 && b.depositStatus === "NONE" && depositReady);
+// Prête à livrer : même règle que deliveryDoneEffects (lib/transitions.js)
+// — une caution due doit être POSÉE, indépendamment de la date. "Poser la
+// caution" ne dépend lui du calendrier (depositReady) que pour éviter de
+// la poser trop tôt ; une fois postée, la livraison redevient possible même
+// si ce n'était pas encore "le jour".
+function readyToDeliver(b) {
+  return !(b.depositAmount > 0 && b.depositStatus !== "HELD");
 }
 
 const MANUAL_STATUSES = ["AVAILABLE", "MAINTENANCE", "RETIRED"];
@@ -292,7 +295,7 @@ export default async function Admin({ searchParams }) {
                     {b.status === "CONFIRMED" && !depositReady && b.depositAmount > 0 && b.depositStatus === "NONE" && (
                       <span className="booking-next">Caution à poser le {dateFr(depositDueDay)}</span>
                     )}
-                    {b.status === "CONFIRMED" && readyToDeliver(b, depositReady) && (
+                    {b.status === "CONFIRMED" && readyToDeliver(b) && (
                       <>
                         <form action={markDelivery}>
                           <input type="hidden" name="id" value={dropoff?.id} />
