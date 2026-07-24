@@ -149,10 +149,8 @@ export default async function Admin({ searchParams }) {
                 <td>{b.reference}</td>
                 <td>{b.customer.firstName} {b.customer.lastName}</td>
                 <td>
-                  {b.unit ? (
-                    `${b.unit.product.name} · ${b.unit.serialNumber}`
-                  ) : b.status === "PENDING" ? (
-                    <select name="unitId" form={`confirm-${b.id}`} defaultValue="">
+                  {b.status === "PENDING" ? (
+                    <select name="unitId" form={`confirm-${b.id}`} defaultValue={b.unitId ?? ""}>
                       <option value="">— à affecter —</option>
                       {eligibleUnits(b, units).map((u) => (
                         <option key={u.id} value={u.id}>{u.serialNumber}</option>
@@ -161,23 +159,25 @@ export default async function Admin({ searchParams }) {
                   ) : b.status === "CONFIRMED" ? (
                     <form action={assignUnit} className="actions-cell">
                       <input type="hidden" name="bookingId" value={b.id} />
-                      <select name="unitId" required defaultValue="">
+                      <select name="unitId" required defaultValue={b.unitId ?? ""}>
                         <option value="" disabled>Machine…</option>
                         {eligibleUnits(b, units).map((u) => (
                           <option key={u.id} value={u.id}>{u.serialNumber}</option>
                         ))}
                       </select>
-                      <button type="submit" className="btn-small">Affecter</button>
+                      <button type="submit" className="btn-small">{b.unitId ? "Modifier" : "Affecter"}</button>
                     </form>
+                  ) : b.unit ? (
+                    `${b.unit.product.name} · ${b.unit.serialNumber}`
                   ) : (
                     <span className="muted">{b.product.name} · — à affecter —</span>
                   )}
                 </td>
                 <td>
-                  {b.kitId ? (
-                    b.kit.serialNumber
+                  {!b.wantsKit ? (
+                    <span className="muted">—</span>
                   ) : b.status === "PENDING" ? (
-                    <select name="kitId" form={`confirm-${b.id}`} defaultValue="">
+                    <select name="kitId" form={`confirm-${b.id}`} defaultValue={b.kitId ?? ""}>
                       <option value="">— aucun —</option>
                       {eligibleKits(b, kits).map((k) => (
                         <option key={k.id} value={k.id}>{k.serialNumber}</option>
@@ -186,16 +186,18 @@ export default async function Admin({ searchParams }) {
                   ) : b.status === "CONFIRMED" ? (
                     <form action={assignKit} className="actions-cell">
                       <input type="hidden" name="bookingId" value={b.id} />
-                      <select name="kitId" required defaultValue="">
+                      <select name="kitId" required defaultValue={b.kitId ?? ""}>
                         <option value="" disabled>Kit…</option>
                         {eligibleKits(b, kits).map((k) => (
                           <option key={k.id} value={k.id}>{k.serialNumber}</option>
                         ))}
                       </select>
-                      <button type="submit" className="btn-small">Affecter</button>
+                      <button type="submit" className="btn-small">{b.kitId ? "Modifier" : "Affecter"}</button>
                     </form>
+                  ) : b.kitId ? (
+                    b.kit.serialNumber
                   ) : (
-                    <span className="muted">—</span>
+                    <span className="muted">— (non affecté)</span>
                   )}
                 </td>
                 <td>{dateFr(b.startDate)}</td>

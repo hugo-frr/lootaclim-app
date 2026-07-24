@@ -8,7 +8,7 @@ import { capacity, fullDays, rangeError, minStartDay } from "../../../lib/availa
 import { quote } from "../../../lib/pricing";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
 import { createCheckoutSession, ensureStripeCustomer } from "../../../lib/stripe";
-import { kitAssignmentError } from "../../../lib/transitions";
+import { kitAssignmentError, unitAssignmentError } from "../../../lib/transitions";
 
 // Nombre de tentatives en cas de conflit d'écriture strictement simultané
 // (collision de référence P2002, conflit de sérialisation P2034).
@@ -140,7 +140,8 @@ export async function createBooking(prevState, formData) {
           // automatiquement le premier kit disponible et libre sur ces
           // dates — inclus, sans supplément. Vous pourrez le changer depuis
           // le back-office. Aucun kit libre : la réservation se fait quand
-          // même, à affecter plus tard.
+          // même, à affecter plus tard — wantsKit garde la trace du souhait
+          // du client indépendamment du résultat de l'affectation.
           let kitId = null;
           if (wantsKit) {
             const kits = await tx.kit.findMany({
@@ -161,6 +162,28 @@ export async function createBooking(prevState, formData) {
             if (eligible) kitId = eligible.id;
           }
 
+          // Même principe pour la machine : affectation automatique d'une
+          // machine disponible du bon modèle et libre sur ces dates —
+          // modifiable ensuite depuis le back-office. Aucune machine libre :
+          // la réservation se fait quand même, à affecter plus tard.
+          let unitId = null;
+          const availableUnits = await tx.unit.findMany({
+            where: { productId: product.id, status: "AVAILABLE" },
+            include: {
+              bookings: { select: { id: true, startDate: true, endDate: true, status: true } },
+            },
+          });
+          const unitBooking = { status: "PENDING", productId: product.id, startDay: f.startDay, endDay: f.endDay };
+          const eligibleUnit = availableUnits.find((u) => {
+            const others = u.bookings.map((x) => ({
+              startDay: toDay(x.startDate),
+              endDay: toDay(x.endDate),
+              status: x.status,
+            }));
+            return unitAssignmentError(unitBooking, u, others) === null;
+          });
+          if (eligibleUnit) unitId = eligibleUnit.id;
+
           const booking = await tx.booking.create({
             data: {
               reference: ref,
@@ -177,7 +200,9 @@ export async function createBooking(prevState, formData) {
               floorFee: q.floorFee,
               total: q.total,
               depositAmount: product.depositAmount,
+              unitId,
               kitId,
+              wantsKit,
               deliveries: {
                 create: [
                   { type: "DROPOFF", date: new Date(f.startDay), timeSlot: f.deliverySlot },

@@ -99,6 +99,7 @@ model Booking {
   unitId      String?
   kit         Kit?       @relation(fields: [kitId], references: [id])
   kitId       String?
+  wantsKit    Boolean    @default(false) // coché par le client à la réservation, même si aucun kit n'a pu être affecté tout de suite
   startDate   DateTime
   endDate     DateTime
   status      String     @default("AWAITING_PAYMENT")
