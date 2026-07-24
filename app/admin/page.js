@@ -4,11 +4,10 @@ import {
   BOOKING_STATUS,
   UNIT_STATUS,
   KIT_STATUS,
-  DELIVERY_STATUS,
   DEPOSIT_STATUS,
 } from "../../lib/constants";
-import { toDay } from "../../lib/dates";
-import { unitAssignmentError, kitAssignmentError } from "../../lib/transitions";
+import { toDay, addDays, nowInParis } from "../../lib/dates";
+import { unitAssignmentError, kitAssignmentError, depositDue } from "../../lib/transitions";
 import AdminHeader from "./AdminHeader";
 import ConfirmSubmit from "./ConfirmSubmit";
 import {
@@ -22,6 +21,7 @@ import {
   createKit,
   saveKit,
   checkDepositsNow,
+  placeDepositNow,
   releaseDeposit,
   captureDeposit,
 } from "./actions";
@@ -64,19 +64,51 @@ function eligibleKits(booking, kits) {
   });
 }
 
+const dateTimeFr = (d, slot) => `${dateFr(d)}${slot ? ` · ${slot}` : ""}`;
+
+// Ordre d'affichage : PENDING d'abord (bloque une décision), puis les
+// réservations à venir triées par date d'intervention la plus proche,
+// enfin l'historique (le plus récent en premier). Renvoie [étage, clé] —
+// la clé commence par "~" pour les étages triés en ordre décroissant.
+function bookingSortKey(b) {
+  const dropoff = b.deliveries.find((d) => d.type === "DROPOFF");
+  const pickup = b.deliveries.find((d) => d.type === "PICKUP");
+  if (b.status === "PENDING") return [0, toDay(b.startDate)];
+  if (b.status === "CONFIRMED") return [1, toDay(dropoff?.date ?? b.startDate)];
+  if (b.status === "DELIVERED") return [2, toDay(pickup?.date ?? b.endDate)];
+  if (b.status === "AWAITING_PAYMENT") return [3, `~${toDay(b.createdAt)}`];
+  if (b.status === "RETURNED") return [4, `~${toDay(pickup?.date ?? b.endDate)}`];
+  return [5, `~${toDay(b.createdAt)}`]; // CANCELLED
+}
+function compareBookings(a, b) {
+  const [ta, ka] = bookingSortKey(a);
+  const [tb, kb] = bookingSortKey(b);
+  if (ta !== tb) return ta - tb;
+  const desc = ka.startsWith("~");
+  if (ka === kb) return 0;
+  return (ka < kb ? -1 : 1) * (desc ? -1 : 1);
+}
+
+// Prête à livrer : caution pas due maintenant (pas encore le moment) ou
+// déjà posée/absente — sinon "Poser la caution" doit passer avant.
+function readyToDeliver(b, depositReady) {
+  return !(b.depositAmount > 0 && b.depositStatus === "NONE" && depositReady);
+}
+
 const MANUAL_STATUSES = ["AVAILABLE", "MAINTENANCE", "RETIRED"];
 
 export default async function Admin({ searchParams }) {
-  const [bookings, units, kits, deliveries, customerCount, products] = await Promise.all([
+  const [bookings, units, kits, customerCount, products] = await Promise.all([
     prisma.booking.findMany({
       include: {
         customer: true,
         product: true,
         unit: { include: { product: true } },
         kit: true,
+        deliveries: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     }),
     prisma.unit.findMany({
       include: {
@@ -91,12 +123,6 @@ export default async function Admin({ searchParams }) {
       },
       orderBy: { serialNumber: "asc" },
     }),
-    prisma.delivery.findMany({
-      where: { status: "SCHEDULED" },
-      include: { booking: { include: { customer: true, address: true } } },
-      orderBy: { date: "asc" },
-      take: 10,
-    }),
     prisma.customer.count(),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
@@ -105,6 +131,10 @@ export default async function Admin({ searchParams }) {
     .filter((b) => !["CANCELLED", "AWAITING_PAYMENT"].includes(b.status))
     .reduce((s, b) => s + b.total, 0);
   const dispo = units.filter((u) => u.status === "AVAILABLE").length;
+  const livraisonsPlanifiees = bookings.reduce(
+    (s, b) => s + b.deliveries.filter((d) => d.status === "SCHEDULED").length,
+    0
+  );
 
   return (
     <div className="stack">
@@ -125,7 +155,7 @@ export default async function Admin({ searchParams }) {
             <div className="lbl">Machines disponibles</div>
           </div>
           <div className="card kpi">
-            <div className="num">{deliveries.length}</div>
+            <div className="num">{livraisonsPlanifiees}</div>
             <div className="lbl">Livraisons planifiées</div>
           </div>
           <div className="card kpi">
@@ -136,102 +166,174 @@ export default async function Admin({ searchParams }) {
       </div>
 
       <div className="card">
-        <h2 style={{ marginBottom: 16 }}>Réservations récentes</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Réf.</th><th>Client</th><th>Machine</th><th>Kit</th><th>Du</th><th>Au</th><th>Total</th><th>Statut</th><th>Caution</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bookings.map((b) => (
-              <tr key={b.id}>
-                <td>{b.reference}</td>
-                <td>{b.customer.firstName} {b.customer.lastName}</td>
-                <td>
-                  {b.status === "PENDING" ? (
-                    <select name="unitId" form={`confirm-${b.id}`} defaultValue={b.unitId ?? ""}>
-                      <option value="">— à affecter —</option>
-                      {eligibleUnits(b, units).map((u) => (
-                        <option key={u.id} value={u.id}>{u.serialNumber}</option>
-                      ))}
-                    </select>
-                  ) : b.status === "CONFIRMED" ? (
-                    <form action={assignUnit} className="actions-cell">
-                      <input type="hidden" name="bookingId" value={b.id} />
-                      <select name="unitId" required defaultValue={b.unitId ?? ""}>
-                        <option value="" disabled>Machine…</option>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+          <h2>Réservations</h2>
+          <form action={checkDepositsNow}>
+            <button type="submit" className="btn-small">Vérifier les cautions dues aujourd&apos;hui</button>
+          </form>
+        </div>
+        <div className="bookings-list">
+          <div className="bookings-head" aria-hidden="true">
+            <span>Réf.</span><span>Client</span><span>Machine</span><span>Kit</span>
+            <span>Livraison</span><span>Reprise</span><span>Total</span>
+            <span>Statut</span><span>Caution</span><span>Action</span>
+          </div>
+          {[...bookings].sort(compareBookings).map((b) => {
+            const dropoff = b.deliveries.find((d) => d.type === "DROPOFF");
+            const pickup = b.deliveries.find((d) => d.type === "PICKUP");
+            const today = nowInParis().day;
+            const depositReady = b.depositAmount > 0 && depositDue(toDay(b.startDate), today);
+            const depositDueDay = addDays(toDay(b.startDate), -1);
+
+            return (
+              <div className="booking-row" key={b.id}>
+                <div className="booking-field"><span className="booking-field-label">Réf.</span><span>{b.reference}</span></div>
+                <div className="booking-field"><span className="booking-field-label">Client</span><span>{b.customer.firstName} {b.customer.lastName}</span></div>
+
+                <div className="booking-field">
+                  <span className="booking-field-label">Machine</span>
+                  <span>
+                    {b.status === "PENDING" ? (
+                      <select name="unitId" form={`confirm-${b.id}`} defaultValue={b.unitId ?? ""}>
+                        <option value="">— à affecter —</option>
                         {eligibleUnits(b, units).map((u) => (
                           <option key={u.id} value={u.id}>{u.serialNumber}</option>
                         ))}
                       </select>
-                      <button type="submit" className="btn-small">{b.unitId ? "Modifier" : "Affecter"}</button>
-                    </form>
-                  ) : b.unit ? (
-                    `${b.unit.product.name} · ${b.unit.serialNumber}`
-                  ) : (
-                    <span className="muted">{b.product.name} · — à affecter —</span>
-                  )}
-                </td>
-                <td>
-                  {!b.wantsKit ? (
-                    <span className="muted">—</span>
-                  ) : b.status === "PENDING" ? (
-                    <select name="kitId" form={`confirm-${b.id}`} defaultValue={b.kitId ?? ""}>
-                      <option value="">— aucun —</option>
-                      {eligibleKits(b, kits).map((k) => (
-                        <option key={k.id} value={k.id}>{k.serialNumber}</option>
-                      ))}
-                    </select>
-                  ) : b.status === "CONFIRMED" ? (
-                    <form action={assignKit} className="actions-cell">
-                      <input type="hidden" name="bookingId" value={b.id} />
-                      <select name="kitId" required defaultValue={b.kitId ?? ""}>
-                        <option value="" disabled>Kit…</option>
+                    ) : b.status === "CONFIRMED" ? (
+                      <form action={assignUnit} className="actions-cell">
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <select name="unitId" required defaultValue={b.unitId ?? ""}>
+                          <option value="" disabled>Machine…</option>
+                          {eligibleUnits(b, units).map((u) => (
+                            <option key={u.id} value={u.id}>{u.serialNumber}</option>
+                          ))}
+                        </select>
+                        <button type="submit" className="btn-small">{b.unitId ? "Modifier" : "Affecter"}</button>
+                      </form>
+                    ) : b.unit ? (
+                      `${b.unit.product.name} · ${b.unit.serialNumber}`
+                    ) : (
+                      <span className="muted">{b.product.name} · — à affecter —</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="booking-field">
+                  <span className="booking-field-label">Kit</span>
+                  <span>
+                    {!b.wantsKit ? (
+                      <span className="muted">—</span>
+                    ) : b.status === "PENDING" ? (
+                      <select name="kitId" form={`confirm-${b.id}`} defaultValue={b.kitId ?? ""}>
+                        <option value="">— aucun —</option>
                         {eligibleKits(b, kits).map((k) => (
                           <option key={k.id} value={k.id}>{k.serialNumber}</option>
                         ))}
                       </select>
-                      <button type="submit" className="btn-small">{b.kitId ? "Modifier" : "Affecter"}</button>
-                    </form>
-                  ) : b.kitId ? (
-                    b.kit.serialNumber
-                  ) : (
-                    <span className="muted">— (non affecté)</span>
-                  )}
-                </td>
-                <td>{dateFr(b.startDate)}</td>
-                <td>{dateFr(b.endDate)}</td>
-                <td>{euros(b.total)}</td>
-                <td><span className={`pill ${b.status}`}>{BOOKING_STATUS[b.status]}</span></td>
-                <td>
+                    ) : b.status === "CONFIRMED" ? (
+                      <form action={assignKit} className="actions-cell">
+                        <input type="hidden" name="bookingId" value={b.id} />
+                        <select name="kitId" required defaultValue={b.kitId ?? ""}>
+                          <option value="" disabled>Kit…</option>
+                          {eligibleKits(b, kits).map((k) => (
+                            <option key={k.id} value={k.id}>{k.serialNumber}</option>
+                          ))}
+                        </select>
+                        <button type="submit" className="btn-small">{b.kitId ? "Modifier" : "Affecter"}</button>
+                      </form>
+                    ) : b.kitId ? (
+                      b.kit.serialNumber
+                    ) : (
+                      <span className="muted">— (non affecté)</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="booking-field"><span className="booking-field-label">Livraison</span><span>{dateTimeFr(b.startDate, dropoff?.timeSlot)}</span></div>
+                <div className="booking-field"><span className="booking-field-label">Reprise</span><span>{dateTimeFr(b.endDate, pickup?.timeSlot)}</span></div>
+                <div className="booking-field"><span className="booking-field-label">Total</span><span>{euros(b.total)}</span></div>
+                <div className="booking-field"><span className="booking-field-label">Statut</span><span className={`pill ${b.status}`}>{BOOKING_STATUS[b.status]}</span></div>
+                <div className="booking-field">
+                  <span className="booking-field-label">Caution</span>
                   {b.depositAmount > 0 ? (
-                    <span className={`pill deposit-${b.depositStatus}`}>
-                      {DEPOSIT_STATUS[b.depositStatus]}
-                    </span>
+                    <span className={`pill deposit-${b.depositStatus}`}>{DEPOSIT_STATUS[b.depositStatus]}</span>
                   ) : (
                     <span className="muted">—</span>
                   )}
-                </td>
-                <td>
+                </div>
+
+                <div className="booking-field booking-actions">
+                  <span className="booking-field-label">Action</span>
                   <div className="actions-cell actions-cell-stacked">
+                    {b.status === "AWAITING_PAYMENT" && <span className="muted">Paiement en cours…</span>}
+
                     {b.status === "PENDING" && (
-                      <form id={`confirm-${b.id}`} action={confirmBooking}>
+                      <>
+                        <form id={`confirm-${b.id}`} action={confirmBooking}>
+                          <input type="hidden" name="id" value={b.id} />
+                          <button type="submit" className="btn-small">Confirmer</button>
+                        </form>
+                        <form action={cancelBooking}>
+                          <input type="hidden" name="id" value={b.id} />
+                          <ConfirmSubmit className="btn-small btn-danger" message={`Annuler la réservation ${b.reference} ?`}>
+                            Annuler
+                          </ConfirmSubmit>
+                        </form>
+                      </>
+                    )}
+
+                    {b.status === "CONFIRMED" && depositReady && (
+                      <form action={placeDepositNow}>
                         <input type="hidden" name="id" value={b.id} />
-                        <button type="submit" className="btn-small">Confirmer</button>
+                        <button type="submit" className="btn-small">Poser la caution</button>
                       </form>
                     )}
-                    {["PENDING", "CONFIRMED"].includes(b.status) && (
+                    {b.status === "CONFIRMED" && !depositReady && b.depositAmount > 0 && b.depositStatus === "NONE" && (
+                      <span className="booking-next">Caution à poser le {dateFr(depositDueDay)}</span>
+                    )}
+                    {b.status === "CONFIRMED" && readyToDeliver(b, depositReady) && (
+                      <>
+                        <form action={markDelivery}>
+                          <input type="hidden" name="id" value={dropoff?.id} />
+                          <input type="hidden" name="resultat" value="DONE" />
+                          <button type="submit" className="btn-small">Marquer livrée</button>
+                        </form>
+                        <form action={markDelivery}>
+                          <input type="hidden" name="id" value={dropoff?.id} />
+                          <input type="hidden" name="resultat" value="FAILED" />
+                          <ConfirmSubmit className="btn-small btn-danger" message="Marquer cette livraison en échec ?">
+                            Échec
+                          </ConfirmSubmit>
+                        </form>
+                      </>
+                    )}
+                    {b.status === "CONFIRMED" && (
                       <form action={cancelBooking}>
                         <input type="hidden" name="id" value={b.id} />
-                        <ConfirmSubmit
-                          className="btn-small btn-danger"
-                          message={`Annuler la réservation ${b.reference} ?`}
-                        >
+                        <ConfirmSubmit className="btn-small btn-danger" message={`Annuler la réservation ${b.reference} ?`}>
                           Annuler
                         </ConfirmSubmit>
                       </form>
                     )}
+
+                    {b.status === "DELIVERED" && (
+                      <>
+                        <form action={markDelivery}>
+                          <input type="hidden" name="id" value={pickup?.id} />
+                          <input type="hidden" name="resultat" value="DONE" />
+                          <button type="submit" className="btn-small">Marquer reprise</button>
+                        </form>
+                        <form action={markDelivery}>
+                          <input type="hidden" name="id" value={pickup?.id} />
+                          <input type="hidden" name="resultat" value="FAILED" />
+                          <ConfirmSubmit className="btn-small btn-danger" message="Marquer cette reprise en échec ?">
+                            Échec
+                          </ConfirmSubmit>
+                        </form>
+                      </>
+                    )}
+
                     {b.status === "RETURNED" && b.depositStatus === "HELD" && (
                       <>
                         <form action={releaseDeposit}>
@@ -247,58 +349,22 @@ export default async function Admin({ searchParams }) {
                             style={{ width: 90 }}
                             required
                           />
-                          <ConfirmSubmit
-                            className="btn-small btn-danger"
-                            message={`Encaisser la caution de ${b.reference} ?`}
-                          >
+                          <ConfirmSubmit className="btn-small btn-danger" message={`Encaisser la caution de ${b.reference} ?`}>
                             Encaisser
                           </ConfirmSubmit>
                         </form>
                       </>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
-      <div className="card">
-        <h2 style={{ marginBottom: 16 }}>Prochaines livraisons & reprises</h2>
-        <table>
-          <thead>
-            <tr><th>Date</th><th>Créneau</th><th>Type</th><th>Client</th><th>Adresse</th><th>Statut</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            {deliveries.map((d) => (
-              <tr key={d.id}>
-                <td>{dateFr(d.date)}</td>
-                <td>{d.timeSlot}</td>
-                <td>{d.type === "DROPOFF" ? "🚚 Livraison" : "↩️ Reprise"}</td>
-                <td>{d.booking.customer.firstName} {d.booking.customer.lastName}</td>
-                <td>{d.booking.address.line1}, {d.booking.address.zip} {d.booking.address.city}</td>
-                <td><span className={`pill ${d.status}`}>{DELIVERY_STATUS[d.status]}</span></td>
-                <td>
-                  <div className="actions-cell">
-                    <form action={markDelivery}>
-                      <input type="hidden" name="id" value={d.id} />
-                      <input type="hidden" name="resultat" value="DONE" />
-                      <button type="submit" className="btn-small">Effectuée</button>
-                    </form>
-                    <form action={markDelivery}>
-                      <input type="hidden" name="id" value={d.id} />
-                      <input type="hidden" name="resultat" value="FAILED" />
-                      <ConfirmSubmit className="btn-small btn-danger" message="Marquer cette intervention en échec ?">
-                        Échec
-                      </ConfirmSubmit>
-                    </form>
+                    {["RETURNED", "CANCELLED"].includes(b.status) && !(b.status === "RETURNED" && b.depositStatus === "HELD") && (
+                      <span className="muted">—</span>
+                    )}
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="card">
