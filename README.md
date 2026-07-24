@@ -119,11 +119,17 @@ vérifiez la caution manuellement si besoin.
 
 ## 📧 Emails de confirmation
 
-Dès qu'un paiement Stripe est confirmé, le client reçoit un email
-récapitulatif de sa réservation (même contenu que la page de confirmation)
-et vous recevez une notification avec les coordonnées du client. L'envoi
-passe par la boîte mail `lootaclim.fr` créée chez votre hébergeur (LWS), en
-SMTP direct (pas de service tiers). À la première installation :
+Deux emails automatiques, envoyés via la boîte mail `lootaclim.fr` créée
+chez votre hébergeur (LWS) en SMTP direct (pas de service tiers) :
+
+- **Au paiement** : le client reçoit un récapitulatif de sa réservation
+  (même contenu que la page de confirmation) et vous recevez une
+  notification avec ses coordonnées.
+- **À la confirmation** (bouton "Confirmer" dans `/admin`) : le client
+  reçoit un court email lui confirmant que sa machine est bien réservée,
+  avec un rappel de la date de livraison.
+
+À la première installation :
 
 1. Sur le Panel Client LWS, créez une adresse email si ce n'est pas déjà
    fait (ex. `reservations@lootaclim.fr`) et notez son mot de passe.

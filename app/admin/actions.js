@@ -6,6 +6,7 @@ import { prisma } from "../../lib/prisma";
 import { toDay } from "../../lib/dates";
 import { slugify } from "../../lib/slug";
 import { saveProductImage } from "../../lib/productImages";
+import { sendBookingConfirmedEmail } from "../../lib/email";
 import {
   confirmError,
   cancelError,
@@ -97,7 +98,14 @@ export async function confirmBooking(formData) {
     },
     { isolationLevel: "Serializable" }
   );
-  if (!error) await placeDepositIfDue(id);
+  if (!error) {
+    await placeDepositIfDue(id);
+    const confirmed = await prisma.booking.findUnique({
+      where: { id },
+      include: { product: true, customer: true, deliveries: true },
+    });
+    if (confirmed) await sendBookingConfirmedEmail(confirmed);
+  }
   finish("/admin", error);
 }
 
