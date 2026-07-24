@@ -141,6 +141,11 @@ export async function cancelBooking(formData) {
           depositStatus: fresh.depositStatus === "HELD" ? "RELEASED" : fresh.depositStatus,
         },
       });
+      // Les livraisons encore planifiées n'ont plus de sens une fois la
+      // réservation annulée — sans ça elles restaient visibles et
+      // cliquables dans le back-office, mais toujours refusées par
+      // deliveryDoneEffects (réservation non confirmée).
+      await tx.delivery.deleteMany({ where: { bookingId: id, status: "SCHEDULED" } });
     });
   }
 
@@ -329,6 +334,17 @@ export async function checkDepositsNow() {
   await requireAdmin();
   const { failed } = await placeDueDeposits();
   finish("/admin", failed > 0 ? `${failed} caution(s) n'ont pas pu être posées — vérifiez le tableau.` : null);
+}
+
+// Pose manuelle de la caution d'UNE réservation (bouton par ligne) — no-op
+// si elle n'est pas due aujourd'hui/demain (même règle que le cron), pour
+// ne jamais poser une caution trop tôt (risque d'expiration bancaire à
+// ~7 jours, voir README).
+export async function placeDepositNow(formData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const result = await placeDepositIfDue(id);
+  finish("/admin", result === "FAILED" ? "La pose de la caution a échoué — vérifiez la carte du client." : null);
 }
 
 export async function releaseDeposit(formData) {
