@@ -4,7 +4,6 @@ import {
   BOOKING_STATUS,
   UNIT_STATUS,
   KIT_STATUS,
-  DEPOSIT_STATUS,
 } from "../../lib/constants";
 import { toDay, addDays, nowInParis } from "../../lib/dates";
 import { unitAssignmentError, kitAssignmentError, depositDue } from "../../lib/transitions";
@@ -260,7 +259,11 @@ export default async function Admin({ searchParams }) {
                 <div className="booking-field">
                   <span className="booking-field-label">Caution</span>
                   {b.depositAmount > 0 ? (
-                    <span className={`pill deposit-${b.depositStatus}`}>{DEPOSIT_STATUS[b.depositStatus]}</span>
+                    ["HELD", "RELEASED", "CAPTURED"].includes(b.depositStatus) ? (
+                      <span className="pill deposit-HELD">OK</span>
+                    ) : (
+                      <span className="pill deposit-FAILED">À poser</span>
+                    )
                   ) : (
                     <span className="muted">—</span>
                   )}
