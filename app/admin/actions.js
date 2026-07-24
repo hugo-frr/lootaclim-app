@@ -21,7 +21,6 @@ import {
 } from "../../lib/transitions";
 import {
   placeDepositIfDue,
-  placeDueDeposits,
   releaseDepositStripe,
   captureDepositStripe,
   refundBookingStripe,
@@ -328,12 +327,6 @@ export async function updateProduct(formData) {
   revalidatePath("/admin/produits");
   revalidatePath("/");
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
-}
-
-export async function checkDepositsNow() {
-  await requireAdmin();
-  const { failed } = await placeDueDeposits();
-  finish("/admin", failed > 0 ? `${failed} caution(s) n'ont pas pu être posées — vérifiez le tableau.` : null);
 }
 
 // Pose manuelle de la caution d'UNE réservation (bouton par ligne) — no-op

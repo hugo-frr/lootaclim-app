@@ -19,7 +19,6 @@ import {
   createUnit,
   createKit,
   saveKit,
-  checkDepositsNow,
   placeDepositNow,
   releaseDeposit,
   captureDeposit,
@@ -168,12 +167,7 @@ export default async function Admin({ searchParams }) {
       </div>
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-          <h2>Réservations</h2>
-          <form action={checkDepositsNow}>
-            <button type="submit" className="btn-small">Vérifier les cautions dues aujourd&apos;hui</button>
-          </form>
-        </div>
+        <h2 style={{ marginBottom: 16 }}>Réservations</h2>
         <div className="bookings-list">
           <div className="bookings-head" aria-hidden="true">
             <span>Réf.</span><span>Client</span><span>Machine</span><span>Kit</span>
