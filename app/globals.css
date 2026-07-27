@@ -300,15 +300,26 @@ textarea:focus { outline: 2px solid var(--cool); border-color: transparent; }
   50% { transform: translate(-50%, 8px); }
 }
 
-.home-section { margin-top: 90px; }
+.home-section { margin-top: clamp(70px, 11vh, 130px); }
+
+/* Bande de verre dépoli, pleine largeur : laisse deviner le fond animé
+   derrière tout en gardant le texte lisible. */
+.section-band {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(63, 182, 224, 0.14);
+  padding: clamp(50px, 8vh, 96px) 0;
+}
+.home-section .section-title { font-size: clamp(26px, 3.4vw, 44px); margin: 6px 0 clamp(20px, 3vh, 36px); }
 
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 30px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 40px); margin-top: clamp(24px, 4vh, 44px); }
 .step p { margin-top: 8px; font-size: 14px; color: #5c7d94; line-height: 1.6; }
 
-.reassurance { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 20px; }
+.reassurance { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(14px, 2vw, 28px); }
 .reassurance-item { text-align: center; padding: 20px 14px; }
 .reassurance-item .ico { font-size: 26px; margin-bottom: 8px; }
 .reassurance-item p { font-size: 13.5px; color: #5c7d94; margin-top: 4px; }
@@ -333,7 +344,7 @@ textarea:focus { outline: 2px solid var(--cool); border-color: transparent; }
   html { scroll-behavior: smooth; }
 }
 
-#modeles { scroll-margin-top: 100px; }
+#modeles, #etapes { scroll-margin-top: 100px; }
 
 .model-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 36px; align-items: center; }
 .model-row.rev { grid-template-columns: 1.3fr 1fr; }

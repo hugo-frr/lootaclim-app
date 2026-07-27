@@ -78,22 +78,24 @@ export default async function Home() {
         </span>
       </section>
 
-      <Reveal className="home-section">
-        <span className="eyebrow">Comment ça marche</span>
-        <h2 className="section-title">3 étapes, zéro complication</h2>
-        <div className="steps">
-          {STEPS.map((s, i) => (
-            <div className="step" key={s.title}>
-              <span className="step-num">{i + 1}</span>
-              <strong>{s.title}</strong>
-              <p>{s.text}</p>
-            </div>
-          ))}
-        </div>
-      </Reveal>
+      <section id="etapes" className="home-section section-band bleed">
+        <Reveal className="bleed-inner">
+          <span className="eyebrow">Comment ça marche</span>
+          <h2 className="section-title">3 étapes, zéro complication</h2>
+          <div className="steps">
+            {STEPS.map((s, i) => (
+              <div className="step" key={s.title}>
+                <span className="step-num">{i + 1}</span>
+                <strong>{s.title}</strong>
+                <p>{s.text}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
 
-      <Reveal className="home-section">
-        <div id="modeles">
+      <section id="modeles" className="home-section bleed">
+        <Reveal className="bleed-inner">
           <span className="eyebrow">Nos modèles</span>
           <h2 className="section-title">Choisissez votre fraîcheur</h2>
           {products.map((p, i) => {
@@ -130,29 +132,31 @@ export default async function Home() {
               </div>
             );
           })}
-        </div>
-      </Reveal>
+        </Reveal>
+      </section>
 
-      <Reveal className="home-section">
-        <div className="reassurance">
-          {REASSURANCE.map((r) => (
-            <div className="reassurance-item" key={r.title}>
-              <div className="ico">{r.ico}</div>
-              <strong>{r.title}</strong>
-              <p>{r.text}</p>
-            </div>
-          ))}
-        </div>
-      </Reveal>
+      <section className="home-section section-band bleed">
+        <Reveal className="bleed-inner">
+          <div className="reassurance">
+            {REASSURANCE.map((r) => (
+              <div className="reassurance-item" key={r.title}>
+                <div className="ico">{r.ico}</div>
+                <strong>{r.title}</strong>
+                <p>{r.text}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
 
-      <Reveal className="home-section home-cta">
-        <h2 className="section-title" style={{ fontSize: 28 }}>
-          Prêt à retrouver la fraîcheur ?
-        </h2>
-        <Link href="#modeles" className="btn btn-primary">
-          Voir les climatiseurs
-        </Link>
-      </Reveal>
+      <section className="home-section bleed">
+        <Reveal className="bleed-inner home-cta">
+          <h2 className="section-title">Prêt à retrouver la fraîcheur ?</h2>
+          <Link href="#modeles" className="btn btn-primary">
+            Voir les climatiseurs
+          </Link>
+        </Reveal>
+      </section>
     </div>
   );
 }
