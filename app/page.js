@@ -3,7 +3,6 @@ import { prisma } from "../lib/prisma";
 import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
 import ModelPhoto from "./ModelPhoto";
-import HeroMedia from "./HeroMedia";
 import Backdrop3D from "./Backdrop3D";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
@@ -23,6 +22,12 @@ const STEPS = [
   },
 ];
 
+const HERO_FACTS = [
+  { label: "🚚 Livraison 24h", detail: "Paris & petite couronne" },
+  { label: "💶 dès 12€/jour", detail: "tarif dégressif" },
+  { label: "✓ Sans engagement", detail: "caution simple" },
+];
+
 const REASSURANCE = [
   { ico: "📍", title: "Paris & petite couronne", text: "Livraison dans tout Paris et la petite couronne." },
   { ico: "🔧", title: "Sans travaux", text: "Aucune installation fixe, aucun perçage." },
@@ -40,41 +45,37 @@ export default async function Home() {
   return (
     <div>
       <Backdrop3D />
-      <section className="hero">
-        <div className="hero-copy">
+      <section className="hero bleed">
+        <div className="hero-inner bleed-inner">
           <span className="eyebrow">Paris · Livraison en 24h</span>
-          <h1 style={{ fontSize: "clamp(40px, 6vw, 72px)", lineHeight: 0.98, margin: "18px 0" }}>
+          <h1 className="hero-title">
             L&apos;été à Paris,
             <br />
             <span style={{ color: "var(--cool)" }}>enfin frais.</span>
           </h1>
-          <p style={{ maxWidth: 440, color: "#33536b", fontWeight: 300, fontSize: 18 }}>
+          <p className="hero-sub">
             Louez un climatiseur mobile, livré et installé chez vous. Sans
             travaux, sans engagement, sans transpirer.
           </p>
-          <Link href="#modeles" className="btn btn-primary" style={{ marginTop: 30, display: "inline-block" }}>
-            Voir les climatiseurs
-          </Link>
-        </div>
-        <div className="hero-cards" aria-hidden="true">
-          <HeroMedia
-            imageUrl="/images/hero-appartement.jpg"
-            imageAlt="Salon parisien lumineux avec climatiseur mobile près d'une fenêtre"
-            videoUrl="/videos/hero-ambiance.mp4"
-          />
-          <div className="hero-card hero-card-1">
-            🚚 Livraison 24h
-            <small>Paris &amp; petite couronne</small>
+          <div className="hero-actions">
+            <Link href="#modeles" className="btn btn-primary">
+              Voir les climatiseurs
+            </Link>
+            <Link href="#etapes" className="btn btn-ghost">
+              Comment ça marche
+            </Link>
           </div>
-          <div className="hero-card hero-card-2">
-            💶 dès 12€
-            <small>par jour, dégressif</small>
-          </div>
-          <div className="hero-card hero-card-3">
-            ✓ Sans engagement
-            <small>caution simple</small>
+          <div className="hero-facts">
+            {HERO_FACTS.map((f) => (
+              <span className="hero-fact" key={f.label}>
+                {f.label} <small>{f.detail}</small>
+              </span>
+            ))}
           </div>
         </div>
+        <span className="hero-scroll" aria-hidden="true">
+          ↓
+        </span>
       </section>
 
       <Reveal className="home-section">
