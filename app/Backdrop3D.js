@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { renderScale, scrollProgress, lerp, pointerToUv } from "../lib/backdrop";
+import {
+  renderScale,
+  scrollProgress,
+  lerp,
+  pointerToUv,
+  createProgram,
+} from "../lib/backdrop";
 
 // Fond animé de la page d'accueil : trois nappes de givre superposées qui
 // dérivent lentement à des profondeurs différentes. Le décalage entre les
@@ -102,34 +108,6 @@ void main() {
 }
 `;
 
-function compile(gl, type, source) {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    gl.deleteShader(shader);
-    return null;
-  }
-  return shader;
-}
-
-function createProgram(gl) {
-  const vs = compile(gl, gl.VERTEX_SHADER, VERTEX_SRC);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SRC);
-  if (!vs || !fs) return null;
-  const program = gl.createProgram();
-  gl.attachShader(program, vs);
-  gl.attachShader(program, fs);
-  gl.linkProgram(program);
-  gl.deleteShader(vs);
-  gl.deleteShader(fs);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    gl.deleteProgram(program);
-    return null;
-  }
-  return program;
-}
-
 export default function Backdrop3D() {
   const canvasRef = useRef(null);
 
@@ -149,9 +127,12 @@ export default function Backdrop3D() {
     } catch {
       gl = null;
     }
-    if (!gl) return;
+    // isContextLost : sur un canvas dont le contexte a été perdu, getContext
+    // renvoie ce même contexte mort au lieu de null. Sans ce test, toutes les
+    // fabriques renverraient null plus bas.
+    if (!gl || gl.isContextLost()) return;
 
-    const program = createProgram(gl);
+    const program = createProgram(gl, VERTEX_SRC, FRAGMENT_SRC);
     if (!program) return;
 
     // Un seul triangle surdimensionné couvre tout l'écran : moins de sommets
@@ -202,11 +183,16 @@ export default function Backdrop3D() {
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
+    // On libère le programme et le tampon, mais surtout PAS le contexte lui-même
+    // via WEBGL_lose_context : le contexte reste attaché au canvas, et un canvas
+    // dont le contexte a été perdu ne peut plus jamais en obtenir un nouveau.
+    // En mode strict de React (actif en développement), le composant est démonté
+    // puis remonté aussitôt : le remontage récupérerait un contexte mort et
+    // planterait. Le navigateur libère le contexte tout seul avec le canvas.
     function dispose() {
       if (frame !== null) cancelAnimationFrame(frame);
       gl.deleteProgram(program);
       gl.deleteBuffer(buffer);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
     }
 
     resize();
