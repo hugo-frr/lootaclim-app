@@ -63,7 +63,10 @@ Composant client autonome, monté une seule fois depuis `app/page.js`.
 - Boucle `requestAnimationFrame`, arrêtée sur `visibilitychange` quand l'onglet
   passe en arrière-plan, relancée au retour.
 - Le suivi souris est désactivé si `(pointer: coarse)`.
-- Le canvas est redimensionné via `ResizeObserver`, avec anti-rebond.
+- Le canvas se redimensionne sur l'événement `resize` de la fenêtre. Le calcul
+  se fait sur `window.innerWidth/innerHeight`, et le redimensionnement est
+  ignoré si les dimensions en pixels n'ont pas changé — pas besoin
+  d'anti-rebond ni de `ResizeObserver`.
 - Si `getContext("webgl")` renvoie `null` ou si la compilation du shader échoue,
   le composant ne rend rien : le dégradé CSS du `body` reste visible et la page
   fonctionne normalement.
@@ -82,10 +85,19 @@ classe dédiée :
 .bleed-inner { max-width: 1240px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
 ```
 
-`body { overflow-x: clip }` empêche l'apparition d'une barre de défilement
-horizontale. On utilise `clip` et non `hidden` : `hidden` créerait un conteneur
-de défilement qui casserait le `position: sticky` du récapitulatif de la page
-réservation (`.recap`, `globals.css`).
+`html { overflow-x: clip }` empêche l'apparition d'une barre de défilement
+horizontale (100vw inclut la largeur de la barre de défilement).
+
+Deux précisions qui comptent :
+
+- **`clip` et non `hidden`** : `hidden` créerait un conteneur de défilement qui
+  casserait le `position: sticky` du récapitulatif de la page réservation
+  (`.recap`, `globals.css`). `clip` se combine légalement avec `overflow-y:
+  visible` et ne crée aucun conteneur de défilement.
+- **Sur `html` et non sur `body`** : appliqué à `body`, le rognage porterait sur
+  un sous-arbre qui contient le canvas en `position: fixed`, et certains
+  navigateurs rognent alors ce canvas. Sur `html`, l'`overflow` est propagé au
+  viewport, qui ne rogne pas les éléments fixes.
 
 Aucune des 6 autres pages n'est modifiée.
 
