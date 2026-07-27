@@ -3,6 +3,8 @@ import { prisma } from "../lib/prisma";
 import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
 import ModelPhoto from "./ModelPhoto";
+import HeroMedia from "./HeroMedia";
+import Backdrop3D from "./Backdrop3D";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -37,6 +39,7 @@ export default async function Home() {
 
   return (
     <div>
+      <Backdrop3D />
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">Paris · Livraison en 24h</span>
@@ -54,6 +57,11 @@ export default async function Home() {
           </Link>
         </div>
         <div className="hero-cards" aria-hidden="true">
+          <HeroMedia
+            imageUrl="/images/hero-appartement.jpg"
+            imageAlt="Salon parisien lumineux avec climatiseur mobile près d'une fenêtre"
+            videoUrl="/videos/hero-ambiance.mp4"
+          />
           <div className="hero-card hero-card-1">
             🚚 Livraison 24h
             <small>Paris &amp; petite couronne</small>

@@ -21,6 +21,20 @@ body {
   flex-direction: column;
 }
 
+/* ---- Fond animé de la page d'accueil ---- */
+/* Le canvas est fixe et en z-index négatif : il passe au-dessus du dégradé
+   du body (qui reste le repli si WebGL est indisponible) mais sous tout le
+   contenu. pointer-events: none pour ne jamais intercepter un clic. */
+.backdrop3d {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 h1, h2, h3 { font-family: "Space Grotesk", sans-serif; letter-spacing: -0.02em; }
 
 main { flex: 1; max-width: 1080px; width: 100%; margin: 0 auto; padding: 120px 24px 80px; }
