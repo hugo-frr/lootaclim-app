@@ -113,8 +113,9 @@ Signature : `buildAcUnit(THREE) -> { root, parts, anchors }`.
 - `root` : le `Group` à ajouter à la scène
 - `parts` : références nommées aux pièces animables — `shell`, `frontPanel`,
   `grille`, `fan`, `panel`, `hose`, `wheels`
-- `anchors` : trois `Vector3` en coordonnées locales, points d'accroche des
-  étiquettes
+- `anchors` : quatre points d'accroche des étiquettes, en coordonnées locales —
+  `{ id, position: Vector3 }` avec les identifiants `intake`, `circuit`,
+  `output` et `exhaust`
 
 Pièces et méthode de construction :
 
@@ -129,11 +130,16 @@ Pièces et méthode de construction :
 | Gaine | `TubeGeometry` le long d'une `CatmullRomCurve3` ; le déploiement interpole les points de contrôle |
 
 Matériaux : `MeshPhysicalMaterial` blanc laqué avec `clearcoat` pour la
-carrosserie, gris anthracite mat pour la grille et le panneau. Éclairage par
-environnement procédural (`RoomEnvironment` + `PMREMGenerator`, tous deux
-fournis avec le paquet `three`) : le rendu « photo produit » sans aucun fichier
-de texture à télécharger. `transmission` (verre réel) est écarté : trop coûteux
-sur mobile.
+carrosserie, gris anthracite mat pour la grille et le panneau.
+
+Éclairage par environnement procédural : `buildStudioEnvironment(THREE)`
+construit une petite scène de panneaux émissifs — un studio photo miniature —
+que `PMREMGenerator.fromScene()` transforme en carte d'environnement. C'est le
+rendu « photo produit » sans aucun fichier de texture à télécharger. On
+n'utilise **pas** `RoomEnvironment` de `three/examples/jsm` : le chemin
+d'import et la signature de cet utilitaire ont changé entre versions de Three,
+alors que le noyau de `three` est stable. `transmission` (verre réel) est
+écarté : trop coûteux sur mobile.
 
 ### Le souffle d'air
 
