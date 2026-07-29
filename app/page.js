@@ -70,7 +70,7 @@ export default async function Home() {
           <h1 className="hero-title">
             L&apos;été à Paris,
             <br />
-            <span style={{ color: "var(--cool)" }}>enfin frais.</span>
+            <span className="hero-accent">enfin frais.</span>
           </h1>
           <p className="hero-sub">
             Louez un climatiseur mobile, livré et installé chez vous. Sans

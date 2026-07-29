@@ -12,8 +12,11 @@ export default function RootLayout({ children }) {
     <html lang="fr">
       <body>
         <nav className="topnav">
-          <Link href="/" className="brand">
-            LOOTA<em>CLIM</em>
+          <Link href="/" className="brand" aria-label="LOOTACLIM Paris, accueil">
+            <span aria-hidden="true">
+              LOOTA<em>CLIM</em>
+            </span>
+            <small aria-hidden="true">PARIS</small>
           </Link>
           <div className="navlinks">
             <Link href="/#modeles">Catalogue</Link>
