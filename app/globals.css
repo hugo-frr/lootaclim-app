@@ -49,6 +49,47 @@ body {
   transition: opacity 0.6s var(--ease);
 }
 
+/* ---- Étiquettes de la vue éclatée ---- */
+/* Régime par défaut (pas de 3D) : une liste ordinaire dans le flux. */
+.ac-labels {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: clamp(20px, 3vh, 34px);
+}
+.ac-labels li {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(63, 182, 224, 0.25);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+/* Régime 3D : AcScene place chaque étiquette par projection. Le conteneur
+   sort du flux, et le recentrage sur le point d'accroche est inclus dans la
+   chaîne transform écrite par le script — un second transform ici l'écraserait. */
+.ac-labels.floating {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.ac-labels.floating li {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-shadow: 0 10px 26px rgba(18, 115, 166, 0.16);
+}
+
 h1, h2, h3 { font-family: "Space Grotesk", sans-serif; letter-spacing: -0.02em; }
 
 main { flex: 1; max-width: 1080px; width: 100%; margin: 0 auto; padding: var(--nav-offset) 24px 80px; }
@@ -336,6 +377,7 @@ textarea:focus { outline: 2px solid var(--cool); border-color: transparent; }
 }
 
 @media (max-width: 820px) {
+  .ac-labels li { font-size: 12px; padding: 7px 13px; white-space: normal; }
   .hero-facts { flex-direction: column; align-items: stretch; width: 100%; max-width: 340px; }
   .hero-fact { justify-content: center; }
   .hero-actions { width: 100%; flex-direction: column; align-items: stretch; max-width: 340px; }

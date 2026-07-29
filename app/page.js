@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma";
 import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
 import ModelPhoto from "./ModelPhoto";
-import AcScene from "./AcScene";
+import AcStage from "./AcStage";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -48,7 +48,6 @@ export default async function Home() {
 
   return (
     <div>
-      <AcScene sectionIds={SECTION_IDS} />
       <section id="hero" className="hero bleed">
         <div className="hero-inner bleed-inner">
           <span className="eyebrow">Paris · Livraison en 24h</span>
@@ -150,6 +149,7 @@ export default async function Home() {
               </div>
             ))}
           </div>
+          <AcStage sectionIds={SECTION_IDS} />
         </Reveal>
       </section>
 
