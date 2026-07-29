@@ -440,8 +440,32 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 .model-row.rev .model-photo { order: 2; }
 .model-row + .model-row { margin-top: 70px; }
 
-.model-photo { aspect-ratio: 4/3; border-radius: 18px; overflow: hidden; }
-.model-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* "contain" et non "cover" : cover remplit le cadre quitte à rogner ce qui
+   dépasse, et coupait le haut et le bas des photos carrées. Avec contain, la
+   machine entre toujours entière, quel que soit le format de la photo — rien
+   à recadrer à la main au moment de l'envoi. */
+.model-photo {
+  aspect-ratio: 4/3;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 2.5vw, 30px);
+  background: linear-gradient(165deg, #ffffff 0%, var(--ice) 100%);
+  border: 1px solid rgba(107, 161, 238, 0.16);
+}
+.model-photo img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  /* Les PNG sont détourés : une ombre portée les pose sur le fond au lieu de
+     les laisser flotter. */
+  filter: drop-shadow(0 14px 26px rgba(46, 95, 168, 0.18));
+}
 .model-photo.placeholder {
   background: repeating-linear-gradient(45deg, var(--frost), var(--frost) 14px, var(--ice) 14px, var(--ice) 28px);
   border: 2px dashed rgba(107, 161, 238, 0.5);
