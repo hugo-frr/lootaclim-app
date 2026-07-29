@@ -49,6 +49,19 @@ body {
   transition: opacity 0.6s var(--ease);
 }
 
+/* Vidéo de fond avancée par le défilement : même emplacement que le canvas 3D,
+   les deux ne sont jamais montés en même temps. */
+.scroll-video {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 /* ---- Étiquettes de la vue éclatée ---- */
 /* Régime par défaut (pas de 3D) : une liste ordinaire dans le flux. */
 .ac-labels {

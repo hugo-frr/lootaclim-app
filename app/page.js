@@ -4,6 +4,8 @@ import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
 import ModelPhoto from "./ModelPhoto";
 import AcStage from "./AcStage";
+import ScrollVideo from "./ScrollVideo";
+import AcLabels from "./AcLabels";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -31,6 +33,11 @@ const HERO_FACTS = [
 // Identifiants des cinq sections, dans l'ordre : ils donnent à la scène 3D les
 // positions de bascule d'une étape du scénario à la suivante.
 const SECTION_IDS = ["hero", "etapes", "modeles", "reassurance", "cta"];
+
+// Vidéo de fond avancée par le défilement, générée par Motion.
+// null tant que le fichier n'existe pas : la scène 3D sert alors de repli.
+// Marche à suivre complète dans docs/motion-brief-climatiseur.md.
+const HERO_VIDEO = null;
 
 const REASSURANCE = [
   { ico: "📍", title: "Paris & petite couronne", text: "Livraison dans tout Paris et la petite couronne." },
@@ -149,7 +156,14 @@ export default async function Home() {
               </div>
             ))}
           </div>
-          <AcStage sectionIds={SECTION_IDS} />
+          {HERO_VIDEO ? (
+            <>
+              <ScrollVideo src={HERO_VIDEO} poster="/videos/hero-clim.jpg" />
+              <AcLabels forceStatic />
+            </>
+          ) : (
+            <AcStage sectionIds={SECTION_IDS} />
+          )}
         </Reveal>
       </section>
 

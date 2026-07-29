@@ -17,17 +17,20 @@ const ETIQUETTES = [
   { id: "exhaust", texte: "Air chaud évacué par la fenêtre" },
 ];
 
-const AcLabels = forwardRef(function AcLabels(props, ref) {
+const AcLabels = forwardRef(function AcLabels({ forceStatic = false }, ref) {
   const [flottant, setFlottant] = useState(false);
 
   useEffect(() => {
+    // En mode vidéo il n'y a aucune scène 3D pour porter les étiquettes :
+    // elles restent en liste, quoi qu'il arrive.
+    if (forceStatic) return;
     // Le positionnement flottant n'a de sens que si la scène peut tourner.
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) return;
     const test = document.createElement("canvas");
     const gl = test.getContext("webgl");
     if (gl) setFlottant(true);
-  }, []);
+  }, [forceStatic]);
 
   return (
     <ul ref={ref} className={`ac-labels ${flottant ? "floating" : ""}`}>
