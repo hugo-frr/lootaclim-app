@@ -522,57 +522,87 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 }
 
 /* ---- Qui sommes-nous ---- */
-/* Le récit se lit comme une note signée : un chiffre qui plante le décor,
-   trois phrases, puis les noms en signature. Pas une grille d'avatars — sans
-   photos c'est un squelette, et l'école de chacun ne fait vendre aucune clim. */
-.about {
+
+/* Aperçu sur l'accueil : le chiffre à gauche, trois lignes et un lien à
+   droite. Volontairement court — le récit complet a sa propre page. */
+.about-teaser-inner {
   display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: clamp(28px, 4vw, 60px);
+  grid-template-columns: auto 1fr;
+  gap: clamp(24px, 4vw, 56px);
   align-items: center;
 }
+.about-teaser-inner > div > p {
+  color: var(--muted); line-height: 1.75; font-size: 15.5px;
+  max-width: 62ch; margin-top: 6px;
+}
+.about-link {
+  display: inline-block; margin-top: 14px;
+  font-family: "Jost", sans-serif; font-weight: 500; font-size: 13.5px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--deep); text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 3px;
+}
+.about-link::after { content: " \2192"; }
+.about-link:hover { color: var(--navy); }
+
+/* Le chiffre qui plante le décor, commun à l'aperçu et à la page dédiée. */
+.about-figure { display: flex; flex-direction: column; gap: 6px; }
+.about-figure strong {
+  font-family: "Jost", sans-serif;
+  font-size: clamp(44px, 6vw, 72px);
+  font-weight: 600; line-height: 0.95;
+  letter-spacing: -0.02em; color: var(--deep);
+  white-space: nowrap;
+}
+.about-figure span {
+  font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+}
+.about-figure-lg strong { font-size: clamp(64px, 11vw, 132px); }
+.about-figure-lg { align-items: center; text-align: center; }
+
+/* ---- Page /qui-sommes-nous ---- */
+.page-title { font-size: clamp(34px, 5.5vw, 62px); line-height: 1.02; margin: 8px 0 18px; }
+.page-lead { font-size: clamp(17px, 2vw, 22px); font-weight: 300; color: var(--muted); line-height: 1.6; max-width: 46ch; }
+
+.story { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 3.5vw, 48px); }
+.story-beat h2 {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--deep); margin-bottom: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid rgba(107, 161, 238, 0.25);
+}
+.story-beat p { color: var(--muted); line-height: 1.75; font-size: 15px; }
+
+.story-photo { aspect-ratio: 16/9; border-radius: 22px; overflow: hidden; }
+.story-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.team { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(26px, 4vw, 56px); align-items: center; }
 .about-photo { aspect-ratio: 4/5; border-radius: 20px; overflow: hidden; }
 .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.about-photo.placeholder {
+.about-photo.placeholder, .story-photo.placeholder {
   background: repeating-linear-gradient(45deg, var(--frost), var(--frost) 14px, var(--ice) 14px, var(--ice) 28px);
   border: 2px dashed rgba(107, 161, 238, 0.5);
   display: flex; align-items: center; justify-content: center;
   color: var(--muted); font-size: 13px; text-align: center; padding: 20px;
 }
 
-.about-figure { display: flex; flex-direction: column; gap: 6px; margin-bottom: clamp(18px, 2.5vh, 28px); }
-.about-figure strong {
-  font-family: "Jost", sans-serif;
-  font-size: clamp(46px, 6.5vw, 82px);
-  font-weight: 600; line-height: 0.95;
-  letter-spacing: -0.02em; color: var(--deep);
+/* Les noms en petites capitales très espacées : le trait du logo. */
+.team-list { list-style: none; }
+.team-list li {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 0; border-bottom: 1px solid rgba(107, 161, 238, 0.2);
 }
-.about-figure span {
-  font-size: 12.5px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted); font-weight: 600;
+.team-list li:last-child { border-bottom: none; }
+.team-list strong {
+  font-family: "Jost", sans-serif; font-weight: 500; font-size: 15px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--navy);
 }
-
-.about-text p { color: var(--muted); line-height: 1.75; font-size: 15.5px; }
-.about-text p + p { margin-top: 14px; }
-.about-text strong { color: var(--navy); font-weight: 600; }
-
-/* Signature : l'espacement large du logo, repris pour clore le récit. */
-.about-text .about-signature {
-  margin-top: clamp(22px, 3vh, 36px);
-  padding-top: 18px;
-  border-top: 1px solid rgba(107, 161, 238, 0.22);
-  font-family: "Jost", sans-serif;
-  font-size: 13px; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--navy);
-}
-.about-text .about-signature small {
-  display: block; margin-top: 7px;
-  font-size: 11px; font-weight: 400; letter-spacing: 0.1em;
-  color: var(--muted);
-}
+.team-list span { font-size: 12.5px; color: var(--muted); }
+.team-note { margin-top: 20px; color: var(--muted); line-height: 1.75; font-size: 15px; }
 
 @media (max-width: 820px) {
-  .about { grid-template-columns: 1fr; }
+  .about-teaser-inner { grid-template-columns: 1fr; gap: 18px; }
+  .story { grid-template-columns: 1fr; gap: 26px; }
+  .team { grid-template-columns: 1fr; }
   .about-photo { aspect-ratio: 4/3; max-height: 320px; }
 }

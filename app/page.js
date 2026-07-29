@@ -98,6 +98,26 @@ export default async function Home() {
       </section>
 
       <div className="page-surface bleed">
+      <section id="apropos" className="home-section about-teaser">
+        <Reveal className="bleed-inner about-teaser-inner">
+          <p className="about-figure">
+            <strong>+30&nbsp;°C</strong>
+            <span>dans 20 m², été 2026</span>
+          </p>
+          <div>
+            <span className="eyebrow">Qui sommes-nous</span>
+            <p>
+              Trois étudiants, un studio sous la canicule. On a cherché à acheter
+              un climatiseur : trop cher, trop encombrant, utilisé trente jours
+              par an. On a préféré les louer.
+            </p>
+            <Link href="/qui-sommes-nous" className="about-link">
+              Notre histoire
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+
       <section id="etapes" className="home-section">
         <Reveal className="bleed-inner">
           <span className="eyebrow">Comment ça marche</span>
@@ -155,42 +175,6 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section id="apropos" className="home-section">
-        <Reveal className="bleed-inner">
-          <span className="eyebrow">Qui sommes-nous</span>
-          <h2 className="section-title">Trois étudiants, un studio, une canicule</h2>
-          <div className="about">
-            <ModelPhoto
-              className="about-photo"
-              url="/images/equipe.jpg"
-              alt="Cian Higgins, Hugo Férré et Romain Despinasse"
-            />
-            <div className="about-text">
-              <p className="about-figure">
-                <strong>+30&nbsp;°C</strong>
-                <span>dans 20 m², été 2026</span>
-              </p>
-              <p>
-                Impossible de dormir. Impossible de travailler. Impossible de se
-                rafraîchir.
-              </p>
-              <p>
-                On a voulu acheter un climatiseur. Trop cher, trop encombrant, et
-                utilisé <strong>trente jours par an</strong> — un meuble le reste
-                de l&apos;année.
-              </p>
-              <p>
-                La solution tenait en un mot : le louer. LOOTACLIM est née dans ce
-                studio, parce que tout Paris avait le même problème que nous.
-              </p>
-              <p className="about-signature">
-                Cian Higgins · Hugo Férré · Romain Despinasse
-                <small>Deux écoles d&apos;ingénieurs, une école de commerce</small>
-              </p>
-            </div>
-          </div>
-        </Reveal>
-      </section>
       </div>
 
       <section id="reassurance" className="home-section bleed">
