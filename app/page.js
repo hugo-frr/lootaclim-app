@@ -55,6 +55,15 @@ export default async function Home() {
 
   return (
     <div>
+      {/* Le fond doit rester au premier niveau de la page. Placé dans un
+          <Reveal>, il serait confiné : un ancêtre porteur d'un transform
+          devient le repère des éléments en position:fixed, qui se calent
+          alors sur cet ancêtre au lieu de l'écran. */}
+      {HERO_VIDEO ? (
+        <ScrollVideo src={HERO_VIDEO} poster="/videos/hero-clim.jpg" />
+      ) : (
+        <AcStage sectionIds={SECTION_IDS} />
+      )}
       <section id="hero" className="hero bleed">
         <div className="hero-inner bleed-inner">
           <span className="eyebrow">Paris · Livraison en 24h</span>
@@ -156,14 +165,7 @@ export default async function Home() {
               </div>
             ))}
           </div>
-          {HERO_VIDEO ? (
-            <>
-              <ScrollVideo src={HERO_VIDEO} poster="/videos/hero-clim.jpg" />
-              <AcLabels forceStatic />
-            </>
-          ) : (
-            <AcStage sectionIds={SECTION_IDS} />
-          )}
+          {HERO_VIDEO && <AcLabels forceStatic />}
         </Reveal>
       </section>
 
