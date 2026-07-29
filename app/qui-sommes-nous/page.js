@@ -29,7 +29,7 @@ const RECIT = [
 ];
 
 const EQUIPE = [
-  { nom: "Cian Higgins", role: "École d'ingénieurs", photo: "/images/cian.jpg" },
+  { nom: "Cian Higgins", role: "ECE Paris", photo: "/images/cian.jpg" },
   { nom: "Hugo Férré", role: "ECE Paris", photo: "/images/hugo.jpg" },
   { nom: "Romain Despinasse", role: "ESSCA Paris", photo: "/images/romain.jpg" },
 ];
@@ -80,7 +80,9 @@ export default function QuiSommesNous() {
 
       <Reveal>
         <span className="eyebrow">L&apos;équipe</span>
-        <h2 className="section-title">Deux écoles d&apos;ingénieurs, une école de commerce</h2>
+        <h2 className="section-title">
+          Deux ingénieurs, un commercial. Trois amis.
+        </h2>
         <ul className="team">
           {EQUIPE.map((m) => (
             <li className="team-member" key={m.nom}>
