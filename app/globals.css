@@ -393,7 +393,18 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 .step p { margin-top: 8px; font-size: 14px; color: var(--muted); line-height: 1.6; }
 
 .reassurance { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(14px, 2vw, 28px); }
-.reassurance-item { text-align: center; padding: 20px 14px; }
+/* Chacun sa carte de verre : la vidéo reste visible autour et entre les
+   blocs, mais le texte secondaire en 13,5 px ne se lit pas par-dessus une
+   image en mouvement. */
+.reassurance-item {
+  text-align: center;
+  padding: 26px 18px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 14px 34px rgba(46, 95, 168, 0.1);
+}
 .reassurance-item .ico { font-size: 26px; margin-bottom: 8px; }
 .reassurance-item p { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
 
