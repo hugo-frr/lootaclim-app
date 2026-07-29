@@ -373,15 +373,17 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 
 .home-section { margin-top: clamp(70px, 11vh, 130px); }
 
-/* Bande de verre dépoli, pleine largeur : laisse deviner le fond animé
-   derrière tout en gardant le texte lisible. */
-.section-band {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(107, 161, 238, 0.14);
-  padding: clamp(50px, 8vh, 96px) 0;
+/* Surface unique de verre dépoli sous le hero : tout le contenu de la page y
+   repose. Une seule plaque continue plutôt que des bandes séparées, sinon la
+   vidéo réapparaît nette dans les intervalles et la page part en rayures. */
+.page-surface {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255, 255, 255, 0.75);
+  padding: clamp(50px, 8vh, 96px) 0 clamp(60px, 9vh, 110px);
+  margin-top: clamp(60px, 9vh, 110px);
 }
+.page-surface .home-section:first-child { margin-top: 0; }
 .home-section .section-title { font-size: clamp(26px, 3.4vw, 44px); margin: 6px 0 clamp(20px, 3vh, 36px); }
 
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
@@ -404,6 +406,10 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 }
 
 @media (max-width: 820px) {
+  /* Flouter une surface de plusieurs écrans de haut par-dessus une vidéo qui
+     se redessine coûte cher en GPU. Sur mobile, on remplace le flou par un
+     fond plus opaque : même lisibilité, sans le coût par image. */
+  .page-surface { backdrop-filter: none; background: rgba(255, 255, 255, 0.93); }
   .ac-labels li { font-size: 12px; padding: 7px 13px; white-space: normal; }
   .hero-facts { flex-direction: column; align-items: stretch; width: 100%; max-width: 340px; }
   .hero-fact { justify-content: center; }

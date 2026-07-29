@@ -97,7 +97,8 @@ export default async function Home() {
         </span>
       </section>
 
-      <section id="etapes" className="home-section section-band bleed">
+      <div className="page-surface bleed">
+      <section id="etapes" className="home-section">
         <Reveal className="bleed-inner">
           <span className="eyebrow">Comment ça marche</span>
           <h2 className="section-title">3 étapes, zéro complication</h2>
@@ -113,7 +114,7 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section id="modeles" className="home-section bleed">
+      <section id="modeles" className="home-section">
         <Reveal className="bleed-inner">
           <span className="eyebrow">Nos modèles</span>
           <h2 className="section-title">Choisissez votre fraîcheur</h2>
@@ -154,7 +155,7 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section id="reassurance" className="home-section section-band bleed">
+      <section id="reassurance" className="home-section">
         <Reveal className="bleed-inner">
           <div className="reassurance">
             {REASSURANCE.map((r) => (
@@ -169,7 +170,7 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section id="cta" className="home-section bleed">
+      <section id="cta" className="home-section">
         <Reveal className="bleed-inner home-cta">
           <h2 className="section-title">Prêt à retrouver la fraîcheur ?</h2>
           <Link href="#modeles" className="btn btn-primary">
@@ -177,6 +178,7 @@ export default async function Home() {
           </Link>
         </Reveal>
       </section>
+      </div>
     </div>
   );
 }
