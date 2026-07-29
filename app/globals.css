@@ -446,14 +446,10 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
    à recadrer à la main au moment de l'envoi. */
 .model-photo {
   aspect-ratio: 4/3;
-  border-radius: 18px;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(14px, 2.5vw, 30px);
-  background: linear-gradient(165deg, #ffffff 0%, var(--ice) 100%);
-  border: 1px solid rgba(107, 161, 238, 0.16);
+  padding: clamp(10px, 2vw, 22px);
 }
 .model-photo img {
   max-width: 100%;
@@ -462,9 +458,9 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
   height: auto;
   object-fit: contain;
   display: block;
-  /* Les PNG sont détourés : une ombre portée les pose sur le fond au lieu de
-     les laisser flotter. */
-  filter: drop-shadow(0 14px 26px rgba(46, 95, 168, 0.18));
+  /* Les PNG sont détourés : ni cadre ni fond, la machine se pose directement
+     sur la page. Une ombre discrète, qui épouse la découpe. */
+  filter: drop-shadow(0 18px 30px rgba(46, 95, 168, 0.13));
 }
 .model-photo.placeholder {
   background: repeating-linear-gradient(45deg, var(--frost), var(--frost) 14px, var(--ice) 14px, var(--ice) 28px);
