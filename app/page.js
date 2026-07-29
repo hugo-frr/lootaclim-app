@@ -37,7 +37,7 @@ const SECTION_IDS = ["hero", "etapes", "modeles", "reassurance", "cta"];
 // Vidéo de fond avancée par le défilement, générée par Motion.
 // null tant que le fichier n'existe pas : la scène 3D sert alors de repli.
 // Marche à suivre complète dans docs/motion-brief-climatiseur.md.
-const HERO_VIDEO = null;
+const HERO_VIDEO = "/videos/hero-clim.mp4";
 
 const REASSURANCE = [
   { ico: "📍", title: "Paris & petite couronne", text: "Livraison dans tout Paris et la petite couronne." },
