@@ -29,9 +29,9 @@ const RECIT = [
 ];
 
 const EQUIPE = [
-  { nom: "Cian Higgins", role: "École d'ingénieurs" },
-  { nom: "Hugo Férré", role: "ECE Paris" },
-  { nom: "Romain Despinasse", role: "ESSCA Paris" },
+  { nom: "Cian Higgins", role: "École d'ingénieurs", photo: "/images/cian.jpg" },
+  { nom: "Hugo Férré", role: "ECE Paris", photo: "/images/hugo.jpg" },
+  { nom: "Romain Despinasse", role: "ESSCA Paris", photo: "/images/romain.jpg" },
 ];
 
 export default function QuiSommesNous() {
@@ -65,38 +65,31 @@ export default function QuiSommesNous() {
       </Reveal>
 
       <Reveal>
-        <ModelPhoto
-          className="story-photo"
-          url="/images/appartement.jpg"
-          alt="Le studio de 20 m² où LOOTACLIM est née"
-        />
+        <figure className="story-figure">
+          <ModelPhoto
+            className="story-photo"
+            url="/images/appartement.jpg"
+            alt="Cian Higgins, Hugo Férré et Romain Despinasse dans le studio de 20 m²"
+          />
+          <figcaption>
+            Le studio de 20 m² où tout a commencé — et où on a passé l&apos;été
+            2026 à chercher comment respirer.
+          </figcaption>
+        </figure>
       </Reveal>
 
       <Reveal>
         <span className="eyebrow">L&apos;équipe</span>
         <h2 className="section-title">Deux écoles d&apos;ingénieurs, une école de commerce</h2>
-        <div className="team">
-          <ModelPhoto
-            className="about-photo"
-            url="/images/equipe.jpg"
-            alt="Cian Higgins, Hugo Férré et Romain Despinasse"
-          />
-          <div>
-            <ul className="team-list">
-              {EQUIPE.map((m) => (
-                <li key={m.nom}>
-                  <strong>{m.nom}</strong>
-                  <span>{m.role}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="team-note">
-              On répond nous-mêmes au téléphone, on livre nous-mêmes, et on
-              connaît chaque machine du parc. C&apos;est l&apos;avantage
-              d&apos;être trois.
-            </p>
-          </div>
-        </div>
+        <ul className="team">
+          {EQUIPE.map((m) => (
+            <li className="team-member" key={m.nom}>
+              <ModelPhoto className="team-photo" url={m.photo} alt={m.nom} />
+              <strong>{m.nom}</strong>
+              <span>{m.role}</span>
+            </li>
+          ))}
+        </ul>
       </Reveal>
 
       <Reveal className="home-cta">
