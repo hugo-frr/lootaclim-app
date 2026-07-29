@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma";
 import { euros } from "../lib/constants";
 import Reveal from "./Reveal";
 import ModelPhoto from "./ModelPhoto";
-import Backdrop3D from "./Backdrop3D";
+import AcScene from "./AcScene";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -28,6 +28,10 @@ const HERO_FACTS = [
   { label: "✓ Sans engagement", detail: "caution simple" },
 ];
 
+// Identifiants des cinq sections, dans l'ordre : ils donnent à la scène 3D les
+// positions de bascule d'une étape du scénario à la suivante.
+const SECTION_IDS = ["hero", "etapes", "modeles", "reassurance", "cta"];
+
 const REASSURANCE = [
   { ico: "📍", title: "Paris & petite couronne", text: "Livraison dans tout Paris et la petite couronne." },
   { ico: "🔧", title: "Sans travaux", text: "Aucune installation fixe, aucun perçage." },
@@ -44,8 +48,8 @@ export default async function Home() {
 
   return (
     <div>
-      <Backdrop3D />
-      <section className="hero bleed">
+      <AcScene sectionIds={SECTION_IDS} />
+      <section id="hero" className="hero bleed">
         <div className="hero-inner bleed-inner">
           <span className="eyebrow">Paris · Livraison en 24h</span>
           <h1 className="hero-title">
@@ -135,7 +139,7 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section className="home-section section-band bleed">
+      <section id="reassurance" className="home-section section-band bleed">
         <Reveal className="bleed-inner">
           <div className="reassurance">
             {REASSURANCE.map((r) => (
@@ -149,7 +153,7 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <section className="home-section bleed">
+      <section id="cta" className="home-section bleed">
         <Reveal className="bleed-inner home-cta">
           <h2 className="section-title">Prêt à retrouver la fraîcheur ?</h2>
           <Link href="#modeles" className="btn btn-primary">
