@@ -28,7 +28,9 @@ export async function login(formData) {
     redirect(
       "/admin/connexion?erreur=" +
         encodeURIComponent(
-          "Administration non configurée : créez le fichier .env (voir la section Connexion du README)."
+          "Administration non configurée : ADMIN_PASSWORD et SESSION_SECRET sont " +
+            "absentes. En local, les renseigner dans le fichier .env ; en ligne, " +
+            "dans les variables d'environnement de l'hébergeur, puis redéployer."
         )
     );
   }
