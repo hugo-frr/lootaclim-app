@@ -138,3 +138,23 @@ model Delivery {
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   bookingId String
 }
+
+// Réponse à l'enquête de marché affichée à l'arrivée sur le site.
+// Champs en String comme le reste du projet : la convention date de SQLite,
+// qui n'avait pas d'énumérations, et elle a été conservée par cohérence.
+// Aucune donnée sensible : ni nom, ni adresse précise, ni revenu.
+model SurveyResponse {
+  id              String   @id @default(cuid())
+  surface         String
+  location        String // arrondissement ou commune, saisie libre
+  housing         String
+  duration        String
+  priceRange      String
+  currentSolution String
+  blocker         String
+  ageRange        String
+  email           String? // facultatif : sert de liste d'attente pour le lancement
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}

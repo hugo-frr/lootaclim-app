@@ -6,6 +6,7 @@ import ModelPhoto from "./ModelPhoto";
 import AcStage from "./AcStage";
 import ScrollVideo from "./ScrollVideo";
 import AcLabels from "./AcLabels";
+import SurveyModal from "./SurveyModal";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -55,6 +56,7 @@ export default async function Home() {
 
   return (
     <div>
+      <SurveyModal />
       {/* Le fond doit rester au premier niveau de la page. Placé dans un
           <Reveal>, il serait confiné : un ancêtre porteur d'un transform
           devient le repère des éléments en position:fixed, qui se calent

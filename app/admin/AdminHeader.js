@@ -7,6 +7,7 @@ export default function AdminHeader() {
     <div className="admin-header">
       <Link href="/admin">Tableau de bord</Link>
       <Link href="/admin/produits">Modèles &amp; prix</Link>
+      <Link href="/admin/enquete">Enquête de marché</Link>
       <form action={logout}>
         <button type="submit" className="linklike">Se déconnecter</button>
       </form>
