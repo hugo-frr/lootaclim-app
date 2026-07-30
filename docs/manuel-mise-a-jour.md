@@ -141,13 +141,16 @@ réencodée spécialement pour le défilement. La marche à suivre est dans
 
 ## Les quatre choses à ne jamais faire
 
-### 1. `npm run db:seed` maintenant que le site est en ligne
+### 1. `npm run db:seed` sur la base de production
 
-Cette commande **efface tout et remet les données de démonstration**. Lancée
-aujourd'hui, elle supprimerait les réservations de tes vrais clients.
+Cette commande **efface tout et remet les données de démonstration**.
 
-Ta base locale et ta base de production sont **la même**. Tant que ce n'est pas
-séparé, considère cette commande comme interdite.
+Un garde-fou la bloque désormais dès que la base contient plus d'une
+réservation ou la moindre réponse à l'enquête — signe qu'il ne s'agit pas d'une
+base de test. Il affiche alors ce qu'il a trouvé et refuse de continuer.
+
+Ce garde-fou ne remplace pas la séparation des bases : voir « Deux bases » plus
+bas.
 
 ### 2. Toucher aux enregistrements mail dans la zone DNS de LWS
 
@@ -173,6 +176,28 @@ déjà exclu par `.gitignore` — ne l'en sors jamais. Le fichier `.env.example`
 existe pour documenter les variables **sans leurs valeurs**.
 
 ---
+
+## Deux bases : test et production
+
+Neon sait dupliquer une base instantanément, sans copier les données
+physiquement.
+
+1. [console.neon.tech](https://console.neon.tech) → ton projet → **Branches**
+2. **Create branch**, nom `dev`, parent `main`
+3. Ouvre la branche → **Connection string** → copie les deux adresses
+4. Dans ton `.env` local, remplace `POSTGRES_PRISMA_URL` et
+   `POSTGRES_URL_NON_POOLING` par celles de `dev`
+
+À partir de là, **ton ordinateur travaille sur `dev`, le site en ligne sur
+`main`**. Vercel garde ses propres variables : rien à changer de son côté.
+
+Deux conséquences à connaître :
+
+- Les données de `dev` sont une **photo de la production au moment de la
+  création** de la branche. Elles ne se synchronisent pas ensuite.
+- Une modification de schéma doit être faite sur `dev`
+  (`npx prisma migrate dev`), puis elle s'applique à la production toute seule
+  au déploiement suivant.
 
 ## Aide-mémoire
 

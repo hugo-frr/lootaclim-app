@@ -7,7 +7,34 @@ import { addDays, nowInParis } from "../lib/dates.js";
 
 const prisma = new PrismaClient();
 
+// Garde-fou : ce script EFFACE tout avant de remplir. Une branche de test ne
+// protège de rien si l'adresse de production se retrouve un jour dans .env.
+// On regarde donc ce que la base contient réellement, et on refuse dès qu'il y
+// a des données qui ne peuvent pas venir d'un jeu d'essai.
+async function verifierQueCeNestPasLaProduction() {
+  const [reservations, enquetes] = await Promise.all([
+    prisma.booking.count(),
+    prisma.surveyResponse.count(),
+  ]);
+
+  // Le jeu d'essai crée exactement une réservation et aucune réponse d'enquête.
+  const suspect = reservations > 1 || enquetes > 0;
+  if (!suspect || process.env.SEED_FORCE === "oui") return;
+
+  console.error("\n⛔ Script interrompu : cette base ne ressemble pas à une base de test.\n");
+  console.error(`  réservations trouvées : ${reservations}`);
+  console.error(`  réponses à l'enquête  : ${enquetes}\n`);
+  console.error("  Ce script efface TOUT avant de remplir. S'il s'agit de la base");
+  console.error("  de production, vous perdriez les réservations de vos clients.\n");
+  console.error("  Vérifiez POSTGRES_PRISMA_URL dans .env : il doit pointer vers");
+  console.error("  la branche « dev », pas vers la production.\n");
+  console.error("  Si vous savez ce que vous faites : SEED_FORCE=oui npm run db:seed\n");
+  process.exit(1);
+}
+
 async function main() {
+  await verifierQueCeNestPasLaProduction();
+
   // Nettoyage (ordre important à cause des relations)
   await prisma.delivery.deleteMany();
   await prisma.booking.deleteMany();
