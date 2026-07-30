@@ -1,7 +1,46 @@
 # Mettre LOOTACLIM en ligne sur lootaclim.fr
 
-État vérifié le 29/07/2026. À suivre dans l'ordre : chaque phase suppose la
+État vérifié le 30/07/2026. À suivre dans l'ordre : chaque phase suppose la
 précédente terminée.
+
+## Où on en est
+
+| Sujet | État |
+|---|---|
+| Décision hébergeur base | **Neon**, via le catalogue Vercel. « Vercel Postgres » n'existe plus sous ce nom, l'offre a été confiée à Neon |
+| Décision dev / prod | **Deux bases** — une d'essai, une réelle |
+| Plan de bascule PostgreSQL | Écrit : `docs/superpowers/plans/2026-07-29-bascule-postgresql.md` |
+| Bascule elle-même | **Bloquée** : demande la base Neon créée par Hugo |
+| Pages légales | À écrire |
+| Stockage des photos | À décider (Vercel Blob, ou dépôt manuel dans `public/images/`) |
+
+## Ce que seul Hugo peut faire
+
+1. Créer le compte **Vercel** (connexion par GitHub) et le projet.
+2. Créer la base **Neon** depuis *Storage → Create Database → Neon*, puis
+   relever **les noms** des variables de connexion qu'elle fournit — le plan
+   suppose `POSTGRES_PRISMA_URL` et `POSTGRES_URL_NON_POOLING`, à confirmer.
+3. Fournir les informations légales de l'entreprise : forme juridique, SIRET,
+   adresse du siège, nom du responsable de publication.
+4. Passer **Stripe en mode réel** (demande le SIRET et un IBAN).
+
+## Ce qu'on a établi sur LWS — à ne pas casser
+
+Reconnaissance DNS du 30/07/2026 : Hugo a **un domaine et une messagerie**,
+mais **aucun hébergement web**. Rien à résilier, et rien qui puisse faire
+tourner l'application (l'hébergement LWS est en PHP).
+
+| Enregistrement | Valeur | Sort au moment de la bascule |
+|---|---|---|
+| `A` de `lootaclim.fr` | `193.37.145.67` (parking LWS) | **À remplacer** par la valeur donnée par Vercel |
+| `MX` | `mail.lootaclim.fr` | **NE PAS TOUCHER** |
+| `A` de `mail` | `193.203.239.99` (`mail75.lwspanel.com`) | **NE PAS TOUCHER** |
+| `TXT` SPF | `v=spf1 mx:lootaclim.fr a:mail.lootaclim.fr a:mailphp.lws-hosting.com -all` | **NE PAS TOUCHER** |
+| Serveurs DNS | `ns17` à `ns20.lwsdns.com` | La zone reste chez LWS |
+
+Supprimer l'un des trois derniers **coupe les emails de confirmation**, et ça ne
+se verrait qu'en perdant un client. Les emails continuant de partir par le SMTP
+de LWS, le SPF reste valide après la bascule : rien à refaire de ce côté.
 
 ---
 
