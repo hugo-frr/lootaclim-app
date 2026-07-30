@@ -718,6 +718,7 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 .question-choix { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(107, 161, 238, 0.15); }
 .question-choix ul { list-style: none; margin: 10px 0 12px; display: flex; flex-direction: column; gap: 6px; }
 .question-choix li { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 6px 0; border-bottom: 1px solid rgba(107, 161, 238, 0.1); }
-.question-ajout-choix { display: flex; gap: 8px; }
-.question-ajout-choix input { flex: 1; padding: 8px 12px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 8px; font: inherit; font-size: 13.5px; }
+.question-ajout-choix { display: flex; gap: 8px; align-items: flex-start; }
+.question-ajout-choix textarea { flex: 1; padding: 8px 12px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 8px; font: inherit; font-size: 13.5px; resize: vertical; }
+.question-edition textarea { width: 100%; font-size: 14px; }
 .question-actions { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(107, 161, 238, 0.15); }

@@ -13,12 +13,31 @@ function texte(formData, clef, max = 200) {
   return String(formData.get(clef) ?? "").trim().slice(0, max);
 }
 
+// Une saisie multiligne devient une liste de choix : sans ça, créer les
+// vingt-quatre arrondissements demanderait vingt-quatre allers-retours.
+// Les doublons et les lignes vides sont écartés.
+function lignes(formData, clef, max = 120) {
+  const vues = new Set();
+  return String(formData.get(clef) ?? "")
+    .split("\n")
+    .map((l) => l.trim().slice(0, max))
+    .filter((l) => {
+      if (!l) return false;
+      const cle = l.toLowerCase();
+      if (vues.has(cle)) return false;
+      vues.add(cle);
+      return true;
+    });
+}
+
 export async function addQuestion(formData) {
   const label = texte(formData, "label");
   if (!label) return;
 
   const type = QUESTION_TYPES.includes(formData.get("type")) ? formData.get("type") : "choice";
   const dernier = await prisma.surveyQuestion.findFirst({ orderBy: { position: "desc" } });
+
+  const choix = type === "choice" ? lignes(formData, "choices") : [];
 
   await prisma.surveyQuestion.create({
     data: {
@@ -27,6 +46,7 @@ export async function addQuestion(formData) {
       type,
       required: formData.get("required") === "on",
       position: (dernier?.position ?? -1) + 1,
+      choices: { create: choix.map((label, i) => ({ label, position: i })) },
     },
   });
   rafraichir();
@@ -91,16 +111,17 @@ export async function moveQuestion(formData) {
 
 export async function addChoice(formData) {
   const questionId = texte(formData, "questionId", 40);
-  const label = texte(formData, "label", 120);
-  if (!questionId || !label) return;
+  const nouveaux = lignes(formData, "label");
+  if (!questionId || nouveaux.length === 0) return;
 
   const dernier = await prisma.surveyChoice.findFirst({
     where: { questionId },
     orderBy: { position: "desc" },
   });
+  const depart = (dernier?.position ?? -1) + 1;
 
-  await prisma.surveyChoice.create({
-    data: { questionId, label, position: (dernier?.position ?? -1) + 1 },
+  await prisma.surveyChoice.createMany({
+    data: nouveaux.map((label, i) => ({ questionId, label, position: depart + i })),
   });
   rafraichir();
 }

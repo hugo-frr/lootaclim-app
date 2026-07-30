@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "../../../../lib/prisma";
 import AdminHeader from "../../AdminHeader";
+import AddQuestionForm from "./AddQuestionForm";
+import AddChoiceForm from "./AddChoiceForm";
 import {
   addQuestion,
   updateQuestion,
@@ -113,11 +115,7 @@ export default async function QuestionsPage() {
                   </li>
                 ))}
               </ul>
-              <form action={addChoice} className="question-ajout-choix">
-                <input type="hidden" name="questionId" value={q.id} />
-                <input name="label" placeholder="Nouveau choix…" required />
-                <button type="submit" className="btn-small">Ajouter</button>
-              </form>
+              <AddChoiceForm action={addChoice} questionId={q.id} />
             </div>
           )}
 
@@ -144,33 +142,7 @@ export default async function QuestionsPage() {
 
       <div className="card">
         <strong className="survey-resultat-titre">Ajouter une question</strong>
-        <form action={addQuestion} className="question-edition">
-          <div className="field">
-            <label htmlFor="nouvelle-label">Question</label>
-            <input id="nouvelle-label" name="label" required placeholder="Votre question…" />
-          </div>
-          <div className="field">
-            <label htmlFor="nouvelle-helper">Précision (facultatif)</label>
-            <input id="nouvelle-helper" name="helper" />
-          </div>
-          <div className="field">
-            <label htmlFor="nouvelle-type">Type de réponse</label>
-            <select id="nouvelle-type" name="type" defaultValue="choice">
-              <option value="choice">Choix multiple</option>
-              <option value="text">Réponse libre</option>
-              <option value="email">Adresse email</option>
-            </select>
-          </div>
-          <label className="checkbox-field">
-            <input type="checkbox" name="required" defaultChecked />
-            Réponse obligatoire
-          </label>
-          <button type="submit" className="btn btn-small">Créer la question</button>
-        </form>
-        <p className="muted" style={{ marginTop: 10 }}>
-          Pour un choix multiple, créez d&apos;abord la question puis ajoutez ses
-          choix ci-dessus.
-        </p>
+        <AddQuestionForm action={addQuestion} />
       </div>
 
       <p className="muted">
