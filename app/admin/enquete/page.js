@@ -6,27 +6,41 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Enquête de marché — LOOTACLIM" };
 
-function csv(reponses) {
-  const colonnes = [
-    "date", "surface", "arrondissement", "logement", "duree",
-    "prix_acceptable", "solution_actuelle", "frein", "age", "email",
-  ];
+// Une colonne par question, dans l'ordre du questionnaire.
+function csv(questions, reponses) {
   const echappe = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lignes = reponses.map((r) =>
-    [
+  const colonnes = ["date", ...questions.map((q) => q.label)];
+  const lignes = reponses.map((r) => {
+    const par = new Map(r.answers.map((a) => [a.questionId, a]));
+    return [
       r.createdAt.toISOString().slice(0, 10),
-      r.surface, r.location, r.housing, r.duration,
-      r.priceRange, r.currentSolution, r.blocker, r.ageRange, r.email ?? "",
-    ].map(echappe).join(",")
-  );
-  return [colonnes.join(","), ...lignes].join("\n");
+      ...questions.map((q) => {
+        const a = par.get(q.id);
+        if (!a) return "";
+        return a.choice?.label ?? a.text ?? "";
+      }),
+    ].map(echappe).join(",");
+  });
+  return [colonnes.map(echappe).join(","), ...lignes].join("\n");
 }
 
 export default async function EnquetePage() {
-  const reponses = await prisma.surveyResponse.findMany({ orderBy: { createdAt: "desc" } });
-  const totaux = summarise(reponses);
-  const emails = reponses.filter((r) => r.email).map((r) => r.email);
-  const contenuCsv = csv(reponses);
+  const questions = await prisma.surveyQuestion.findMany({
+    include: { choices: { orderBy: { position: "asc" } } },
+    orderBy: { position: "asc" },
+  });
+  const reponses = await prisma.surveyResponse.findMany({
+    include: { answers: { include: { choice: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const totaux = summarise(questions, reponses);
+  // Les emails sont les réponses aux questions de type "email".
+  const questionsEmail = new Set(questions.filter((q) => q.type === "email").map((q) => q.id));
+  const emails = reponses
+    .flatMap((r) => r.answers)
+    .filter((a) => questionsEmail.has(a.questionId) && a.text)
+    .map((a) => a.text);
+  const contenuCsv = csv(questions.filter((q) => q.active), reponses);
 
   return (
     <div className="stack">
@@ -35,6 +49,9 @@ export default async function EnquetePage() {
       <div>
         <span className="eyebrow">Analyse</span>
         <h1 className="section-title">Enquête de marché</h1>
+        <p className="muted">
+          <a href="/admin/enquete/questions">Modifier les questions →</a>
+        </p>
       </div>
 
       {reponses.length === 0 ? (
@@ -65,7 +82,7 @@ export default async function EnquetePage() {
               ) : (
                 <ul className="survey-resultats">
                   {q.choices.map((c) => (
-                    <li key={c.value}>
+                    <li key={c.id}>
                       <span className="survey-resultat-label">{c.label}</span>
                       <span className="survey-jauge" aria-hidden="true">
                         <span style={{ width: `${c.percent}%` }} />

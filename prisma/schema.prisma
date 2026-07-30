@@ -139,22 +139,57 @@ model Delivery {
   bookingId String
 }
 
-// Réponse à l'enquête de marché affichée à l'arrivée sur le site.
-// Champs en String comme le reste du projet : la convention date de SQLite,
-// qui n'avait pas d'énumérations, et elle a été conservée par cohérence.
-// Aucune donnée sensible : ni nom, ni adresse précise, ni revenu.
+// ---- Enquête de marché ----
+// Les questions vivent en base et non dans le code : Hugo doit pouvoir les
+// modifier, en ajouter, les réordonner depuis le back-office sans déploiement.
+
+model SurveyQuestion {
+  id       String  @id @default(cuid())
+  label    String
+  helper   String? // précision facultative sous l'intitulé
+  type     String  @default("choice") // "choice" | "text" | "email"
+  position Int
+  required Boolean @default(true)
+  // Désactiver plutôt que supprimer préserve les réponses déjà recueillies.
+  active   Boolean @default(true)
+
+  choices SurveyChoice[]
+  answers SurveyAnswer[]
+
+  @@index([position])
+}
+
+model SurveyChoice {
+  id         String         @id @default(cuid())
+  label      String
+  position   Int
+  question   SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String
+  answers    SurveyAnswer[]
+
+  @@index([questionId, position])
+}
+
 model SurveyResponse {
-  id              String   @id @default(cuid())
-  surface         String
-  location        String // arrondissement ou commune, saisie libre
-  housing         String
-  duration        String
-  priceRange      String
-  currentSolution String
-  blocker         String
-  ageRange        String
-  email           String? // facultatif : sert de liste d'attente pour le lancement
-  createdAt       DateTime @default(now())
+  id        String         @id @default(cuid())
+  createdAt DateTime       @default(now())
+  answers   SurveyAnswer[]
 
   @@index([createdAt])
+}
+
+model SurveyAnswer {
+  id         String         @id @default(cuid())
+  response   SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId String
+  question   SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String
+  // Une réponse à choix pointe vers le choix retenu ; une réponse libre ou un
+  // email est stocké en texte.
+  choice     SurveyChoice?  @relation(fields: [choiceId], references: [id], onDelete: SetNull)
+  choiceId   String?
+  text       String?
+
+  @@index([responseId])
+  @@index([questionId])
 }

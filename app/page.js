@@ -48,6 +48,12 @@ const REASSURANCE = [
 ];
 
 export default async function Home() {
+  const surveyQuestions = await prisma.surveyQuestion.findMany({
+    where: { active: true },
+    include: { choices: { orderBy: { position: "asc" } } },
+    orderBy: { position: "asc" },
+  });
+
   const products = await prisma.product.findMany({
     where: { active: true },
     include: { units: true, images: { orderBy: { position: "asc" } } },
@@ -56,7 +62,7 @@ export default async function Home() {
 
   return (
     <div>
-      <SurveyModal />
+      <SurveyModal questions={surveyQuestions} />
       {/* Le fond doit rester au premier niveau de la page. Placé dans un
           <Reveal>, il serait confiné : un ancêtre porteur d'un transform
           devient le repère des éléments en position:fixed, qui se calent

@@ -610,7 +610,7 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
   .team-photo { aspect-ratio: 4/3; }
 }
 
-/* ---- Enquête de marché ---- */
+/* ---- Enquête de marché : une question par écran ---- */
 .survey-fond {
   position: fixed; inset: 0; z-index: 200;
   display: flex; align-items: center; justify-content: center;
@@ -621,17 +621,12 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 }
 .survey {
   position: relative;
-  width: 100%; max-width: 620px;
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 24px;
-  padding: clamp(24px, 4vw, 44px);
+  width: 100%; max-width: 560px;
+  max-height: calc(100dvh - 32px); overflow-y: auto;
+  background: #fff; border-radius: 24px;
+  padding: clamp(26px, 4vw, 44px);
   box-shadow: 0 30px 80px rgba(5, 18, 46, 0.35);
 }
-.survey h2 { font-size: clamp(24px, 3.4vw, 34px); margin: 6px 0 14px; }
-.survey-intro { color: var(--muted); font-size: 14.5px; line-height: 1.7; margin-bottom: 26px; }
-
 .survey-fermer {
   position: absolute; top: 14px; right: 14px;
   width: 34px; height: 34px; border-radius: 50%;
@@ -640,57 +635,61 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 }
 .survey-fermer:hover { background: var(--frost); }
 
-.survey-question { border: none; margin-bottom: 22px; }
-.survey-question legend {
-  font-family: "Jost", sans-serif; font-weight: 500; font-size: 14.5px;
-  color: var(--navy); margin-bottom: 10px; padding: 0;
-}
-.survey-facultatif { color: var(--muted); font-weight: 400; }
+.survey-progression { height: 4px; border-radius: 100px; background: var(--ice); overflow: hidden; margin-bottom: 14px; }
+.survey-progression span { display: block; height: 100%; background: var(--deep); border-radius: 100px; transition: width 0.35s var(--ease); }
+.survey-compteur { font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 
-.survey-choix { display: flex; flex-wrap: wrap; gap: 8px; }
-.survey-choix label {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 9px 15px; border-radius: 100px;
-  border: 1px solid rgba(107, 161, 238, 0.35);
-  font-size: 13.5px; color: var(--navy); cursor: pointer;
-  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
-}
-.survey-choix label:hover { border-color: var(--deep); }
-.survey-choix label.actif { background: var(--ice); border-color: var(--deep); font-weight: 600; }
-.survey-choix input { accent-color: var(--deep); }
+.survey-ecran h2 { font-size: clamp(21px, 3vw, 28px); line-height: 1.2; margin: 12px 0 6px; outline: none; }
+.survey-aide { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin-bottom: 4px; }
+.survey-intro { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 8px 0 4px; }
 
-.survey input[type="text"], .survey input[type="email"] {
-  width: 100%; padding: 11px 14px; font-size: 14.5px; font-family: inherit;
-  border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 12px;
+/* Les choix sont des boutons : un seul clic répond et fait avancer. */
+.survey-choix { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.survey-choix button {
+  text-align: left; padding: 13px 18px; border-radius: 14px;
+  border: 1px solid rgba(107, 161, 238, 0.35); background: #fff;
+  font: inherit; font-size: 14.5px; color: var(--navy); cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.survey-choix button:hover { border-color: var(--deep); transform: translateX(3px); }
+.survey-choix button.actif { background: var(--ice); border-color: var(--deep); font-weight: 600; }
+
+/* Beaucoup de choix courts (les arrondissements) : on passe en grille. */
+.survey-choix:has(> :nth-child(10)) {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px;
+}
+.survey-choix:has(> :nth-child(10)) button { text-align: center; padding: 12px 8px; }
+
+.survey-saisie {
+  width: 100%; margin-top: 20px; padding: 13px 16px;
+  font-size: 15px; font-family: inherit;
+  border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 14px;
   color: var(--navy); background: #fff;
 }
-.survey input[type="text"]:focus, .survey input[type="email"]:focus {
-  outline: 2px solid var(--deep); border-color: transparent;
-}
+.survey-saisie:focus { outline: 2px solid var(--deep); border-color: transparent; }
 
 .survey-consent {
-  display: flex; gap: 11px; align-items: flex-start;
-  margin: 26px 0 8px; font-size: 12.5px; color: var(--muted); line-height: 1.6;
-  cursor: pointer;
+  display: flex; gap: 11px; align-items: flex-start; margin: 22px 0 4px;
+  font-size: 12.5px; color: var(--muted); line-height: 1.6; cursor: pointer;
 }
 .survey-consent input { margin-top: 3px; accent-color: var(--deep); flex-shrink: 0; }
-.survey-erreur { color: #c0392b; font-size: 12.5px; margin-top: 6px; }
+.survey-erreur { color: #c0392b; font-size: 13px; margin-top: 12px; }
 
-.survey-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 22px; }
-.survey-actions .btn { width: 100%; }
-.survey-passer {
+.survey-navigation { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 26px; }
+.survey-retour {
   border: none; background: none; color: var(--muted);
-  font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline;
+  font: inherit; font-size: 13.5px; cursor: pointer;
 }
-.survey-passer:hover { color: var(--navy); }
+.survey-retour:hover { color: var(--navy); }
 
-.survey-merci { text-align: center; padding: 20px 0; }
-.survey-merci p { color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+.survey-merci { text-align: center; padding: 16px 0; }
+.survey-merci h2 { outline: none; }
+.survey-merci p { color: var(--muted); line-height: 1.7; margin: 12px 0 24px; }
 
-@media (max-width: 620px) {
+@media (max-width: 560px) {
   .survey { border-radius: 18px; }
-  .survey-choix { flex-direction: column; }
-  .survey-choix label { width: 100%; }
+  .survey-navigation { flex-direction: column-reverse; align-items: stretch; }
+  .survey-navigation .btn { width: 100%; }
 }
 
 /* ---- Résultats de l'enquête (back-office) ---- */
@@ -707,3 +706,18 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
   .survey-resultats li { grid-template-columns: 1fr 60px; }
   .survey-jauge { display: none; }
 }
+
+/* ---- Gestion des questions (back-office) ---- */
+.question-carte { margin-bottom: 4px; }
+.question-entete { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+.question-ordre { display: flex; gap: 5px; }
+.question-ordre button:disabled { opacity: 0.3; cursor: default; }
+.question-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.question-edition { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.question-edition .field { width: 100%; }
+.question-choix { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(107, 161, 238, 0.15); }
+.question-choix ul { list-style: none; margin: 10px 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.question-choix li { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 6px 0; border-bottom: 1px solid rgba(107, 161, 238, 0.1); }
+.question-ajout-choix { display: flex; gap: 8px; }
+.question-ajout-choix input { flex: 1; padding: 8px 12px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 8px; font: inherit; font-size: 13.5px; }
+.question-actions { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(107, 161, 238, 0.15); }
