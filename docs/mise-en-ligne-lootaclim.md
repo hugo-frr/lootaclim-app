@@ -1,206 +1,204 @@
 # Mettre LOOTACLIM en ligne sur lootaclim.fr
 
-État vérifié le 30/07/2026. À suivre dans l'ordre : chaque phase suppose la
-précédente terminée.
+Parcours complet, dans l'ordre. Écrit le 30/07/2026.
 
-## Où on en est
+**🧑 = tu le fais** (comptes, clics, informations que je n'ai pas)
+**🤖 = je le fais** (code)
 
-| Sujet | État |
-|---|---|
-| Décision hébergeur base | **Neon**, via le catalogue Vercel. « Vercel Postgres » n'existe plus sous ce nom, l'offre a été confiée à Neon |
-| Décision dev / prod | **Deux bases** — une d'essai, une réelle |
-| Plan de bascule PostgreSQL | Écrit : `docs/superpowers/plans/2026-07-29-bascule-postgresql.md` |
-| Bascule elle-même | **Bloquée** : demande la base Neon créée par Hugo |
-| Pages légales | À écrire |
-| Stockage des photos | À décider (Vercel Blob, ou dépôt manuel dans `public/images/`) |
-
-## Ce que seul Hugo peut faire
-
-1. Créer le compte **Vercel** (connexion par GitHub) et le projet.
-2. Créer la base **Neon** depuis *Storage → Create Database → Neon*, puis
-   relever **les noms** des variables de connexion qu'elle fournit — le plan
-   suppose `POSTGRES_PRISMA_URL` et `POSTGRES_URL_NON_POOLING`, à confirmer.
-3. Fournir les informations légales de l'entreprise : forme juridique, SIRET,
-   adresse du siège, nom du responsable de publication.
-4. Passer **Stripe en mode réel** (demande le SIRET et un IBAN).
-
-## Ce qu'on a établi sur LWS — à ne pas casser
-
-Reconnaissance DNS du 30/07/2026 : Hugo a **un domaine et une messagerie**,
-mais **aucun hébergement web**. Rien à résilier, et rien qui puisse faire
-tourner l'application (l'hébergement LWS est en PHP).
-
-| Enregistrement | Valeur | Sort au moment de la bascule |
-|---|---|---|
-| `A` de `lootaclim.fr` | `193.37.145.67` (parking LWS) | **À remplacer** par la valeur donnée par Vercel |
-| `MX` | `mail.lootaclim.fr` | **NE PAS TOUCHER** |
-| `A` de `mail` | `193.203.239.99` (`mail75.lwspanel.com`) | **NE PAS TOUCHER** |
-| `TXT` SPF | `v=spf1 mx:lootaclim.fr a:mail.lootaclim.fr a:mailphp.lws-hosting.com -all` | **NE PAS TOUCHER** |
-| Serveurs DNS | `ns17` à `ns20.lwsdns.com` | La zone reste chez LWS |
-
-Supprimer l'un des trois derniers **coupe les emails de confirmation**, et ça ne
-se verrait qu'en perdant un client. Les emails continuant de partir par le SMTP
-de LWS, le SPF reste valide après la bascule : rien à refaire de ce côté.
+À la fin de l'étape 5, le site est **visible sur lootaclim.fr**. L'étape 6 est ce
+qu'il faut en plus pour **encaisser légalement de l'argent**.
 
 ---
 
-## Ce qui bloque aujourd'hui
+## Étape 1 🧑 — Créer la base de données (~10 min)
 
-| # | Blocage | Conséquence si on ignore |
-|---|---|---|
-| 1 | `prisma/schema.prisma` est figé sur SQLite (`file:./dev.db`) | **Les réservations disparaissent à chaque déploiement.** Le disque de Vercel est effacé et n'est pas partagé entre serveurs |
-| 2 | `lib/productImages.js` écrit dans `public/images/` à l'exécution | Toute photo envoyée depuis le back-office est perdue |
-| 3 | `STRIPE_SECRET_KEY` est une clé `sk_test` | Aucun paiement réel n'est encaissé |
-| 4 | Aucune page légale | Mentions légales **obligatoires en France** pour un site commercial ; CGV nécessaires pour vendre à des particuliers |
-| 5 | 44 commits jamais poussés sur GitHub | Vercel n'a rien à déployer |
-| 6 | `public/images/` n'est pas versionné | Aucune photo produit en ligne |
-| 7 | Les 3 photos produit sont le même fichier, avec le logo RAKS | Les 3 modèles se ressemblent, et la photo appartient à un fabricant |
+Ton site stocke ses réservations dans un fichier local (SQLite). Sur un
+hébergement comme Vercel, ce fichier est effacé à chaque mise à jour : **les
+réservations disparaîtraient**. Il faut donc une vraie base, hébergée ailleurs.
 
----
+1. Crée un compte sur **[vercel.com](https://vercel.com)** → *Continue with GitHub*.
+2. Dans le tableau de bord, onglet **Storage** → **Create Database**.
+3. Choisis **Neon** (« Serverless Postgres ») → **Create**.
+   > *Neon est ce qu'est devenue l'offre Postgres de Vercel. C'est du PostgreSQL
+   > standard : si tu changes d'hébergeur un jour, la base se déplace sans
+   > réécrire une ligne de code.*
+4. Nomme-la **`lootaclim`**, région **Paris (cdg1)** ou Francfort.
+5. Une fois créée, ouvre-la → onglet **`.env.local`** (ou *Quickstart*).
 
-## Phase 1 — La base de données (le gros morceau)
+**Ce que tu me donnes :** la **liste des noms** de variables affichés
+(`DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`…).
+**Pas les valeurs** — elles contiennent un mot de passe.
 
-Sans ça, rien d'autre ne sert.
-
-1. **Créer une base PostgreSQL.** Le plus simple : dans le tableau de bord
-   Vercel, onglet *Storage* → *Create Database* → *Postgres*. Une formule
-   gratuite existe et suffit largement au démarrage.
-
-2. **Changer le connecteur** dans `prisma/schema.prisma` :
-
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
-
-3. **Ajouter `DATABASE_URL`** dans `.env` (valeur locale) et dans les variables
-   d'environnement du projet Vercel (valeur de production).
-
-4. **Rejouer les migrations** sur la nouvelle base :
-   `npx prisma migrate deploy`
-
-5. **Réinjecter les données de départ** : `npm run db:seed`, puis recréer le
-   parc réel (machines, numéros de série, kits) via `npm run db:studio` ou le
-   back-office.
-
-> ⚠️ Les migrations existantes ont été écrites pour SQLite. Certaines peuvent
-> échouer sur PostgreSQL, dont les types sont plus stricts. Prévoir de les
-> reprendre — c'est le point le plus incertain de toute la mise en ligne.
+**Ce que tu fais des valeurs :** tu les copies toi-même dans le fichier `.env`
+à la racine du projet, à la fin.
 
 ---
 
-## Phase 2 — Le stockage des photos
+## Étape 2 🤖 — Basculer le code sur PostgreSQL (~10 min)
 
-`lib/productImages.js` écrit sur le disque local. Sur Vercel c'est impossible.
+Dès que tu m'as donné les noms de variables :
 
-Deux options :
+- Je change le connecteur dans `prisma/schema.prisma`.
+- Je remplace les 6 migrations écrites pour SQLite par une migration neuve pour
+  PostgreSQL. *(Aucune base en production n'existe : cet historique ne protège
+  rien, et le rejouer exposerait à des incompatibilités pour zéro bénéfice.)*
+- Je peuple la base : 3 modèles, 8 machines, 4 kits.
+- Je vérifie : 122 tests, compilation, et une réservation de bout en bout avec
+  la carte de test Stripe `4242 4242 4242 4242`.
 
-- **Vercel Blob** — s'installe en quelques lignes, formule gratuite au
-  démarrage. À privilégier.
-- **Rien changer** et déposer les photos à la main dans `public/images/` avant
-  chaque déploiement. Gratuit, mais le glisser-déposer du back-office ne
-  marchera plus en ligne.
-
-Dans les deux cas, **régler d'abord le problème des photos identiques** : les
-5 fichiers de `public/images/` ont la même empreinte, et affichent le logo
-RAKS d'un fabricant. Photographier les vraies machines (fond clair, lumière du
-jour) comme le recommande le guide de lancement.
-
-Puis versionner le dossier : `git add public/images/`
+Rien ne change pour toi visuellement. Plan détaillé :
+`docs/superpowers/plans/2026-07-29-bascule-postgresql.md`
 
 ---
 
-## Phase 3 — Pages légales
+## Étape 3 🤖 — Envoyer le code sur GitHub (~1 min)
 
-Obligatoires avant d'encaisser le moindre euro.
-
-| Page | Contenu | Où |
-|---|---|---|
-| Mentions légales | Identité de l'entreprise, SIRET, hébergeur, contact | `/mentions-legales` |
-| CGV / CGL | Caution, casse, annulation, retard de restitution | `/cgv` |
-| Confidentialité (RGPD) | Données collectées, durée, droits | `/confidentialite` |
-
-Partir d'un modèle (LegalPlace, Captain Contrat) et faire relire. Ajouter les
-trois liens dans le pied de page (`app/layout.js`).
-
----
-
-## Phase 4 — Envoyer le code et créer le projet
+**49 commits n'ont jamais été envoyés.** Vercel déploie depuis GitHub : sans
+cette étape, il n'a rien à publier.
 
 ```bash
 git push -u origin main
 ```
 
-Puis sur **vercel.com** : *Add New* → *Project* → importer
-`hugo-frr/lootaclim-app`. Next.js est détecté automatiquement, aucun réglage
-de build à toucher.
+Le dépôt existe déjà : `github.com/hugo-frr/lootaclim-app`.
 
-**Variables d'environnement à saisir dans Vercel** (onglet *Settings* →
-*Environment Variables*) — les mêmes que le `.env` local, plus `DATABASE_URL` :
-
-```
-DATABASE_URL          ADMIN_PASSWORD        SESSION_SECRET
-STRIPE_SECRET_KEY     STRIPE_WEBHOOK_SECRET CRON_SECRET
-SMTP_HOST             SMTP_PORT             SMTP_USER
-SMTP_PASSWORD         EMAIL_FROM            ADMIN_NOTIFICATION_EMAIL
-```
-
-> **Coût** : le plan gratuit de Vercel interdit l'usage commercial. Pour un
-> site qui encaisse des paiements, il faut le plan Pro, environ 20 €/mois.
+> ⚠️ **Vérifie que le dépôt est privé** avant de pousser. Il ne contient aucun
+> mot de passe (`.env` est exclu), mais ton code commercial n'a pas à être
+> public. GitHub → *Settings* → *Danger Zone* → *Change visibility*.
 
 ---
 
-## Phase 5 — Brancher le domaine
+## Étape 4 🧑 — Créer le projet Vercel et déployer (~10 min)
 
-1. Dans Vercel : *Settings* → *Domains* → ajouter `lootaclim.fr` et
-   `www.lootaclim.fr`. Vercel affiche les valeurs DNS exactes à recopier.
-2. Dans le Panel Client **LWS** : *Nom de domaine* → *Zone DNS*.
-   - Un enregistrement **A** sur `@` vers l'adresse IP donnée par Vercel
-   - Un enregistrement **CNAME** sur `www` vers l'adresse donnée par Vercel
-3. **Ne pas toucher aux enregistrements MX** : ce sont eux qui font marcher ta
-   boîte mail `mail.lootaclim.fr`. Les supprimer couperait les emails de
-   confirmation.
-4. Compter de 15 minutes à quelques heures de propagation. Le certificat HTTPS
+1. Sur Vercel : **Add New** → **Project** → importe `hugo-frr/lootaclim-app`.
+2. Next.js est reconnu tout seul. **Ne touche à aucun réglage de compilation.**
+3. Avant de cliquer *Deploy*, ouvre **Environment Variables** et saisis :
+
+| Variable | Où la trouver |
+|---|---|
+| `ADMIN_PASSWORD` | ton `.env` |
+| `SESSION_SECRET` | ton `.env` |
+| `STRIPE_SECRET_KEY` | ton `.env` (clé de test pour l'instant) |
+| `STRIPE_WEBHOOK_SECRET` | à refaire à l'étape 6 |
+| `CRON_SECRET` | ton `.env` |
+| `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASSWORD` | ton `.env` |
+| `EMAIL_FROM` | ton `.env` |
+| `ADMIN_NOTIFICATION_EMAIL` | ton adresse |
+
+Les variables de la base sont déjà là : Vercel les a ajoutées tout seul en
+créant Neon.
+
+4. **Deploy.** Deux à trois minutes.
+5. Le site est en ligne sur une adresse en `…vercel.app`. **Ouvre-la et
+   vérifie** avant de brancher ton domaine.
+
+> **Coût :** le forfait gratuit de Vercel **interdit l'usage commercial**. Pour
+> un site qui encaisse des paiements, il faut le forfait **Pro, ~20 €/mois**.
+
+---
+
+## Étape 5 🧑 — Brancher lootaclim.fr (~15 min + propagation)
+
+1. Sur Vercel : projet → **Settings** → **Domains** → ajoute `lootaclim.fr`
+   **et** `www.lootaclim.fr`. Vercel affiche les valeurs DNS exactes à recopier.
+2. Va dans le **LWS Panel** → **Nom de domaine** → **Zone DNS**.
+3. **Modifie uniquement** :
+   - l'enregistrement **`A`** de `@` (ou `lootaclim.fr`) → l'adresse IP donnée par Vercel
+   - l'enregistrement **`CNAME`** de `www` → la valeur donnée par Vercel
+
+### ⛔ Les trois enregistrements à ne surtout pas toucher
+
+| Enregistrement | Valeur actuelle |
+|---|---|
+| `MX` | `mail.lootaclim.fr` |
+| `A` de `mail` | `193.203.239.99` |
+| `TXT` (SPF) | `v=spf1 mx:lootaclim.fr a:mail.lootaclim.fr a:mailphp.lws-hosting.com -all` |
+
+Ce sont eux qui font marcher ta messagerie. **En supprimer un coupe les emails
+de confirmation** — et tu ne t'en apercevrais qu'en perdant un client. Ils sont
+indépendants du site : le site part chez Vercel, les mails restent chez LWS.
+
+Comme tu continues d'envoyer par le SMTP de LWS, ton SPF reste valide. Rien à
+refaire de ce côté.
+
+4. Compte de 15 minutes à quelques heures de propagation. Le certificat HTTPS
    est délivré automatiquement par Vercel.
 
----
-
-## Phase 6 — Passer en paiement réel
-
-1. Dans Stripe, quitter le **mode test** (bouton en haut à droite). Le passage
-   en réel demande le SIRET et un IBAN.
-2. Récupérer la clé `sk_live_...` et remplacer `STRIPE_SECRET_KEY` dans Vercel.
-3. Créer un **nouveau webhook** pointant sur
-   `https://lootaclim.fr/api/stripe/webhook`, récupérer son secret `whsec_...`
-   et le mettre dans `STRIPE_WEBHOOK_SECRET`.
-4. Vérifier que la tâche planifiée de pose des cautions tourne : elle est déjà
-   déclarée dans `vercel.json` (`/api/cron/deposits`, tous les jours à 5 h) et
-   protégée par `CRON_SECRET`.
+**✅ À ce stade, ton site est accessible sur https://lootaclim.fr.**
 
 ---
 
-## Phase 7 — Recette en ligne
+## Étape 6 — Avant d'encaisser le premier euro
+
+Le site est visible, mais **il ne doit pas encore prendre de vraie réservation**.
+
+### 6a 🧑🤖 Pages légales — obligatoires
+
+Trois pages sont légalement exigées en France pour un site commercial :
+
+| Page | Ce qu'il me faut de toi |
+|---|---|
+| Mentions légales | Forme juridique, **SIRET**, adresse du siège, responsable de publication |
+| CGV / conditions de location | Un modèle relu (LegalPlace, Captain Contrat) |
+| Confidentialité (RGPD) | Rien — je la rédige d'après les données réellement collectées |
+
+Je peux écrire la politique de confidentialité de façon quasi complète : je sais
+exactement ce que ton application enregistre (nom, prénom, email, téléphone,
+adresse, étage, code d'accès, dates, référence de paiement Stripe).
+
+Pour les **CGV**, je peux écrire la structure et y injecter tes vraies règles
+telles qu'elles sont codées — 29 € de livraison et reprise, tarif dégressif,
+caution par empreinte bancaire, battement d'un jour entre deux locations. Mais
+**je n'inventerai pas les clauses juridiques** sur la casse, le retard de
+restitution ou la responsabilité : une clause qui a l'air sérieuse mais qui est
+fausse te nuirait plus que son absence.
+
+### 6b 🧑 Passer Stripe en réel
+
+1. Dans Stripe, quitte le **mode test**. Le passage en réel demande ton SIRET et
+   un IBAN.
+2. Récupère la clé `sk_live_…` et remplace `STRIPE_SECRET_KEY` dans Vercel.
+3. Crée un **nouveau webhook** vers `https://lootaclim.fr/api/stripe/webhook`,
+   récupère son secret `whsec_…` et mets-le dans `STRIPE_WEBHOOK_SECRET`.
+4. La pose automatique des cautions est déjà déclarée dans `vercel.json`
+   (`/api/cron/deposits`, chaque jour à 5 h), protégée par `CRON_SECRET`.
+
+### 6c 🧑 Les photos produit
+
+Tes 3 photos actuelles sont **le même fichier**, et il porte le logo **RAKS**
+d'un fabricant. Tes trois modèles se ressemblent donc, et la photo ne
+t'appartient pas.
+
+Photographie tes vraies machines (fond clair, lumière du jour), puis dépose-les
+dans `public/images/`. Le dossier n'est pas encore versionné, je m'en occupe.
+
+> **À savoir :** le glisser-déposer d'image du back-office **ne marchera pas en
+> ligne** — il écrit sur le disque, que Vercel efface. Vu que tu as trois
+> modèles et que tu changes rarement leurs photos, le plus simple est de les
+> déposer dans `public/images/` et de les versionner. Installer un service de
+> stockage dédié serait disproportionné pour ce besoin.
+
+---
+
+## Recette finale 🧑
 
 Avant d'annoncer le site :
 
 - [ ] Une réservation complète avec une **vraie carte**, puis remboursement
       depuis Stripe
-- [ ] Les deux emails arrivent (client + notification admin), y compris vers
-      une adresse Gmail ou Outlook — vérifier qu'ils ne tombent pas en
-      indésirables
-- [ ] `/admin` accessible avec le mot de passe, inaccessible sans
-- [ ] La page d'accueil sur un vrai téléphone : vidéo fluide, texte lisible
-- [ ] Les trois modèles affichent leur propre photo
-- [ ] Les liens légaux répondent dans le pied de page
+- [ ] Les deux emails arrivent (client + notification), y compris vers Gmail —
+      vérifier qu'ils ne tombent pas en indésirables
+- [ ] `/admin` accessible avec le mot de passe, refusé sans
+- [ ] L'accueil sur un vrai téléphone : vidéo fluide, texte lisible
+- [ ] Les trois modèles affichent chacun leur photo
+- [ ] Les liens légaux répondent en pied de page
 
 ---
 
 ## Limite connue à surveiller
 
 Les blocages de caution Stripe (empreintes bancaires) **expirent après environ
-7 jours**. Pour une location de plus d'une semaine, la caution posée avant la
-livraison peut avoir expiré au moment de la reprise, et sa libération ou son
-encaissement échouera. Surveiller manuellement les locations longues tant que
-ce n'est pas traité.
+7 jours**. Pour une location de plus d'une semaine, la caution posée avant
+livraison peut avoir expiré à la reprise, et sa libération ou son encaissement
+échouera. Surveille manuellement les locations longues tant que ce n'est pas
+traité.
