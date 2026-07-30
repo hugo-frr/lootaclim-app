@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { summarise } from "../../../lib/survey";
 import AdminHeader from "../AdminHeader";
@@ -49,9 +50,9 @@ export default async function EnquetePage() {
       <div>
         <span className="eyebrow">Analyse</span>
         <h1 className="section-title">Enquête de marché</h1>
-        <p className="muted">
-          <a href="/admin/enquete/questions">Modifier les questions →</a>
-        </p>
+        <Link href="/admin/enquete/questions" className="lien-fleche">
+          Modifier les questions <span aria-hidden="true">→</span>
+        </Link>
       </div>
 
       {reponses.length === 0 ? (
@@ -115,7 +116,7 @@ export default async function EnquetePage() {
               Toutes les réponses au format tableur, à ouvrir dans Excel ou Numbers.
             </p>
             <a
-              className="btn btn-small"
+              className="btn-small"
               download="enquete-lootaclim.csv"
               href={`data:text/csv;charset=utf-8,${encodeURIComponent(contenuCsv)}`}
             >

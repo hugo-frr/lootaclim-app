@@ -145,9 +145,9 @@ export default async function QuestionsPage() {
         <AddQuestionForm action={addQuestion} />
       </div>
 
-      <p className="muted">
-        <Link href="/admin/enquete">← Voir les résultats</Link>
-      </p>
+      <Link href="/admin/enquete" className="lien-fleche">
+        <span aria-hidden="true">←</span> Voir les résultats
+      </Link>
     </div>
   );
 }
