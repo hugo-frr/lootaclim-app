@@ -10,8 +10,11 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  // Adresse groupée (hôte "-pooler"), utilisée par l'application à chaque requête.
+  url       = env("POSTGRES_PRISMA_URL")
+  // Adresse directe : "prisma migrate" ne supporte pas le regroupement de connexions.
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 // Un MODÈLE de climatiseur (ex : RIVOLI)
