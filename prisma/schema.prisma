@@ -53,6 +53,22 @@ model Unit {
   product      Product   @relation(fields: [productId], references: [id])
   productId    String
   bookings     Booking[]
+  events       UnitEvent[]
+}
+
+// Journal de vie d'une machine. Sans lui, un parc important devient
+// ingouvernable dès la première contestation : savoir quelle machine était
+// chez quel client, et quand, est ce qui tranche le litige.
+model UnitEvent {
+  id        String   @id @default(cuid())
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId    String
+  type      String // CREATED | ASSIGNED | DELIVERED | RETURNED | STATUS_CHANGED | NOTE
+  detail    String?
+  bookingId String? // réservation concernée, quand il y en a une
+  createdAt DateTime @default(now())
+
+  @@index([unitId, createdAt])
 }
 
 // Un kit de calfeutrage physique — universel, pas lié à un modèle précis.

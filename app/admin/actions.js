@@ -195,6 +195,14 @@ export async function assignUnit(formData) {
       error = unitAssignmentError(b, unit, others);
       if (error) return;
       await tx.booking.update({ where: { id: bookingId }, data: { unitId } });
+      await tx.unitEvent.create({
+        data: {
+          unitId,
+          type: "ASSIGNED",
+          detail: `Affectée à ${booking.reference}`,
+          bookingId,
+        },
+      });
     },
     { isolationLevel: "Serializable" }
   );
@@ -220,6 +228,16 @@ export async function markDelivery(formData) {
         error = deliveryFailError(delivery);
         if (error) return;
         await tx.delivery.update({ where: { id }, data: { status: "FAILED" } });
+        if (delivery.booking.unitId) {
+          await tx.unitEvent.create({
+            data: {
+              unitId: delivery.booking.unitId,
+              type: "STATUS_CHANGED",
+              detail: `Intervention en échec (${delivery.type === "PICKUP" ? "reprise" : "livraison"})`,
+              bookingId: delivery.bookingId,
+            },
+          });
+        }
         return;
       }
       const effects = deliveryDoneEffects(delivery, delivery.booking);
@@ -239,6 +257,17 @@ export async function markDelivery(formData) {
       if (effects.kit) {
         await tx.kit.update({ where: { id: delivery.booking.kitId }, data: { status: effects.kit } });
       }
+      await tx.unitEvent.create({
+        data: {
+          unitId: delivery.booking.unitId,
+          type: delivery.type === "PICKUP" ? "RETURNED" : "DELIVERED",
+          detail:
+            delivery.type === "PICKUP"
+              ? `Récupérée — ${delivery.booking.reference}`
+              : `Livrée — ${delivery.booking.reference}`,
+          bookingId: delivery.bookingId,
+        },
+      });
     },
     { isolationLevel: "Serializable" }
   );
@@ -260,6 +289,16 @@ export async function saveUnit(formData) {
     error = unitStatusChangeError(unit, statut);
     if (error) return;
     await tx.unit.update({ where: { id }, data: { status: statut, notes: notes || null } });
+    if (unit.status !== statut) {
+      await tx.unitEvent.create({
+        data: { unitId: id, type: "STATUS_CHANGED", detail: `${unit.status} → ${statut}` },
+      });
+    }
+    if ((unit.notes ?? "") !== (notes || "")) {
+      await tx.unitEvent.create({
+        data: { unitId: id, type: "NOTE", detail: notes || "Note effacée" },
+      });
+    }
   });
   finish("/admin", error);
 }
@@ -468,7 +507,12 @@ export async function createUnit(formData) {
       error = "Modèle introuvable.";
     } else {
       try {
-        await prisma.unit.create({ data: { productId, serialNumber, notes: notes || null } });
+        const creee = await prisma.unit.create({
+          data: { productId, serialNumber, notes: notes || null },
+        });
+        await prisma.unitEvent.create({
+          data: { unitId: creee.id, type: "CREATED", detail: `Entrée au parc — ${product.name}` },
+        });
       } catch (e) {
         if (e.code !== "P2002") throw e;
         error = "Ce numéro de série existe déjà.";
