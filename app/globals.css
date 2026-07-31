@@ -735,3 +735,46 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 .question-ajout-choix textarea { flex: 1; padding: 8px 12px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 8px; font: inherit; font-size: 13.5px; resize: vertical; }
 .question-edition textarea { width: 100%; font-size: 14px; }
 .question-actions { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(107, 161, 238, 0.15); }
+
+/* ---- Page de scan d'une machine (téléphone d'abord) ---- */
+.scan-carte { text-align: center; }
+.scan-titre {
+  font-family: "Jost", sans-serif; font-weight: 600;
+  font-size: clamp(30px, 8vw, 44px); letter-spacing: 0.06em;
+  margin: 8px 0 14px;
+}
+.scan-resa {
+  text-align: left; margin: 22px 0;
+  border-top: 1px solid rgba(107, 161, 238, 0.2);
+}
+.scan-ligne {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+  padding: 11px 0; border-bottom: 1px solid rgba(107, 161, 238, 0.14);
+  font-size: 14px;
+}
+.scan-ligne span { color: var(--muted); flex-shrink: 0; }
+.scan-ligne strong { text-align: right; font-weight: 600; }
+.scan-ligne a { color: var(--deep); font-weight: 600; text-decoration: none; }
+
+/* Le bouton d'action est volontairement énorme : on s'en sert debout, une
+   machine dans les bras, sur le trottoir. */
+.scan-action { margin-top: 8px; }
+.scan-action .btn { width: 100%; padding: 18px 24px; font-size: 16.5px; }
+.scan-action .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+.scan-bloque {
+  margin-top: 12px; font-size: 13.5px; line-height: 1.6;
+  color: #c76b2e; background: #fff0e0;
+  border-radius: 12px; padding: 12px 14px; text-align: left;
+}
+
+.scan-note { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.scan-note .field { width: 100%; }
+
+.scan-historique { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.scan-historique li {
+  display: flex; gap: 14px; align-items: baseline;
+  padding: 9px 0; border-bottom: 1px solid rgba(107, 161, 238, 0.1);
+  font-size: 13.5px;
+}
+.scan-historique li:last-child { border-bottom: none; }
+.scan-historique time { color: var(--muted); font-size: 12px; flex-shrink: 0; font-variant-numeric: tabular-nums; }

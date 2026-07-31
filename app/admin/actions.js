@@ -35,6 +35,15 @@ function finish(path, error) {
   redirect(error ? `${path}?erreur=${encodeURIComponent(error)}` : path);
 }
 
+// Page où revenir après l'action. La page de scan s'en sert pour rester sur la
+// machine au lieu de renvoyer au tableau.
+// Seuls les chemins du back-office sont acceptés : sans ce filtre, un champ de
+// formulaire trafiqué pourrait rediriger vers un site extérieur.
+function retourDe(formData) {
+  const brut = String(formData.get("retour") ?? "");
+  return /^\/admin(\/[\w\-/%.]*)?$/.test(brut) ? brut : "/admin";
+}
+
 // Confirme la réservation et, si l'admin les a choisis dans la même ligne du
 // tableau, affecte la machine et/ou le kit en un seul clic — plus besoin de
 // confirmer puis d'affecter séparément. Les deux affectations restent
@@ -206,7 +215,7 @@ export async function assignUnit(formData) {
     },
     { isolationLevel: "Serializable" }
   );
-  finish("/admin", error);
+  finish(retourDe(formData), error);
 }
 
 export async function markDelivery(formData) {
@@ -271,7 +280,7 @@ export async function markDelivery(formData) {
     },
     { isolationLevel: "Serializable" }
   );
-  finish("/admin", error);
+  finish(retourDe(formData), error);
 }
 
 export async function saveUnit(formData) {
@@ -300,7 +309,7 @@ export async function saveUnit(formData) {
       });
     }
   });
-  finish("/admin", error);
+  finish(retourDe(formData), error);
 }
 
 export async function updateProduct(formData) {
