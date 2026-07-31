@@ -3,7 +3,7 @@
 // S'exécute dans le runtime edge : lib/session.js n'utilise que Web Crypto.
 
 import { NextResponse } from "next/server";
-import { verifySession, SESSION_COOKIE } from "./lib/session";
+import { readSession, SESSION_COOKIE } from "./lib/session";
 
 export async function middleware(request) {
   const { pathname, search } = request.nextUrl;
@@ -11,7 +11,9 @@ export async function middleware(request) {
 
   const token = request.cookies.get(SESSION_COOKIE)?.value ?? "";
   const secret = process.env.SESSION_SECRET ?? "";
-  if (secret && (await verifySession(token, secret, Date.now()))) {
+  // Le middleware vérifie seulement que la session est valide : il tourne dans
+  // le runtime edge, sans accès à la base. Le rôle est contrôlé côté page.
+  if (secret && (await readSession(token, secret, Date.now()))) {
     return NextResponse.next();
   }
 

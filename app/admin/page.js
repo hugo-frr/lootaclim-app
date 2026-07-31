@@ -1,3 +1,4 @@
+import { requireUser } from "./auth";
 import { prisma } from "../../lib/prisma";
 import {
   euros,
@@ -99,6 +100,11 @@ function readyToDeliver(b) {
 const MANUAL_STATUSES = ["AVAILABLE", "MAINTENANCE", "RETIRED"];
 
 export default async function Admin({ searchParams }) {
+  // Le middleware ne vérifie que la signature du jeton : il tourne dans le
+  // runtime edge, sans accès à la base. C'est ici qu'on refuse un compte
+  // désactivé ou supprimé, sans attendre l'expiration de sa session.
+  await requireUser();
+
   const [bookings, units, kits, customerCount, products] = await Promise.all([
     prisma.booking.findMany({
       include: {

@@ -1,3 +1,4 @@
+import { requireUser } from "../auth";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { prisma } from "../../../lib/prisma";
@@ -20,6 +21,11 @@ const PAR_PAGE = 24; // planche A4 de 3 colonnes × 8 lignes
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.lootaclim.fr";
 
 export default async function EtiquettesPage({ searchParams }) {
+  // Le middleware ne vérifie que la signature du jeton : il tourne dans le
+  // runtime edge, sans accès à la base. C'est ici qu'on refuse un compte
+  // désactivé ou supprimé, sans attendre l'expiration de sa session.
+  await requireUser();
+
   const modele = searchParams?.modele ?? "";
   const etat = searchParams?.etat ?? "";
   const choisies = String(searchParams?.machines ?? "")

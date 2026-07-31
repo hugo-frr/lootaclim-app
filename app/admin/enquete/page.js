@@ -1,3 +1,4 @@
+import { requireUser } from "../auth";
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { summarise } from "../../../lib/survey";
@@ -26,6 +27,11 @@ function csv(questions, reponses) {
 }
 
 export default async function EnquetePage() {
+  // Le middleware ne vérifie que la signature du jeton : il tourne dans le
+  // runtime edge, sans accès à la base. C'est ici qu'on refuse un compte
+  // désactivé ou supprimé, sans attendre l'expiration de sa session.
+  await requireUser();
+
   const questions = await prisma.surveyQuestion.findMany({
     include: { choices: { orderBy: { position: "asc" } } },
     orderBy: { position: "asc" },

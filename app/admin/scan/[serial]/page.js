@@ -1,3 +1,4 @@
+import { requireUser } from "../../auth";
 import Link from "next/link";
 import { prisma } from "../../../../lib/prisma";
 import { UNIT_STATUS, BOOKING_STATUS } from "../../../../lib/constants";
@@ -17,6 +18,11 @@ function jour(d) {
 }
 
 export default async function ScanPage({ params, searchParams }) {
+  // Le middleware ne vérifie que la signature du jeton : il tourne dans le
+  // runtime edge, sans accès à la base. C'est ici qu'on refuse un compte
+  // désactivé ou supprimé, sans attendre l'expiration de sa session.
+  await requireUser();
+
   const serial = decodeURIComponent(params.serial ?? "").trim();
 
   const unit = await prisma.unit.findFirst({

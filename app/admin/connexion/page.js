@@ -14,9 +14,30 @@ export default function Connexion({ searchParams }) {
         <form action={login}>
           <input type="hidden" name="suivant" value={suivant} />
           <div className="field">
-            <label htmlFor="password">Mot de passe administrateur</label>
-            <input id="password" name="password" type="password" required autoFocus />
+            <label htmlFor="email">Adresse email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="username"
+              autoFocus
+              placeholder="prenom@lootaclim.fr"
+            />
           </div>
+          <div className="field" style={{ marginTop: 12 }}>
+            <label htmlFor="password">Mot de passe</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <p className="muted" style={{ marginTop: 10, fontSize: 12.5 }}>
+            Sans adresse email, le mot de passe d&apos;administration historique
+            reste accepté.
+          </p>
           <button type="submit" className="btn btn-primary" style={{ width: "100%", marginTop: 14 }}>
             Se connecter
           </button>

@@ -1,3 +1,4 @@
+import { requireUser } from "../auth";
 import { prisma } from "../../../lib/prisma";
 import { euros } from "../../../lib/constants";
 import AdminHeader from "../AdminHeader";
@@ -7,6 +8,11 @@ import { updateProduct, createProduct } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function Produits({ searchParams }) {
+  // Le middleware ne vérifie que la signature du jeton : il tourne dans le
+  // runtime edge, sans accès à la base. C'est ici qu'on refuse un compte
+  // désactivé ou supprimé, sans attendre l'expiration de sa session.
+  await requireUser();
+
   const products = await prisma.product.findMany({
     include: { images: { orderBy: { position: "asc" } } },
     orderBy: { dailyPrice: "asc" },
