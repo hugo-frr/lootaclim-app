@@ -66,9 +66,33 @@ model UnitEvent {
   type      String // CREATED | ASSIGNED | DELIVERED | RETURNED | STATUS_CHANGED | NOTE
   detail    String?
   bookingId String? // réservation concernée, quand il y en a une
+  // Qui a fait le geste. Nul pour les événements antérieurs aux comptes, et
+  // SetNull à la suppression : effacer un compte ne doit jamais effacer
+  // l'historique d'une machine.
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    String?
   createdAt DateTime @default(now())
 
   @@index([unitId, createdAt])
+}
+
+// Comptes du back-office. Un compte nominatif par personne : c'est ce qui
+// donne le « qui » dans l'historique des machines.
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String // PBKDF2-SHA256, voir lib/password.js
+  role         String    @default("LIVREUR") // ADMIN | MAGASINIER | LIVREUR
+  // Désactiver plutôt que supprimer préserve l'historique et permet de rendre
+  // l'accès à quelqu'un qui revient.
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  events UnitEvent[]
+
+  @@index([email])
 }
 
 // Un kit de calfeutrage physique — universel, pas lié à un modèle précis.
