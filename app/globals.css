@@ -778,3 +778,44 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 }
 .scan-historique li:last-child { border-bottom: none; }
 .scan-historique time { color: var(--muted); font-size: 12px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* ---- Planche d'étiquettes ---- */
+.etiq-filtres { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.etiq-liste { margin-top: 14px; font-size: 13.5px; }
+.etiq-liste summary { cursor: pointer; color: var(--deep); font-weight: 600; }
+.etiq-liste ul { list-style: none; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.etiq-liste a { color: var(--navy); font-weight: 600; text-decoration: none; }
+
+.etiq-planche {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 4mm; margin-top: 24px;
+}
+.etiquette {
+  display: flex; align-items: center; gap: 3mm;
+  border: 1px dashed rgba(107, 161, 238, 0.4); border-radius: 3mm;
+  padding: 3mm; background: #fff;
+  break-inside: avoid;
+}
+.etiquette-qr { width: 17mm; height: 17mm; flex-shrink: 0; display: block; }
+.etiquette-texte { display: flex; flex-direction: column; gap: 1mm; min-width: 0; }
+/* Le numéro en clair : un QR rayé ou mouillé devient illisible, pas lui. */
+.etiquette-texte strong {
+  font-family: "Jost", sans-serif; font-weight: 600; font-size: 11pt;
+  letter-spacing: 0.06em; color: #05122e;
+}
+.etiquette-texte span { font-size: 7.5pt; color: #5a6b85; }
+
+@media print {
+  /* À l'impression, il ne reste que les planches. */
+  .topnav, footer, .sans-impression, .scroll-video, .ac-scene { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  html { background: #fff; }
+  body { background: #fff; }
+  .etiq-planche {
+    margin: 0; padding: 8mm;
+    page-break-after: always; break-after: page;
+    gap: 3mm;
+  }
+  .etiq-planche:last-child { page-break-after: auto; break-after: auto; }
+  .etiquette { border: 1px solid #d8e2f2; }
+}

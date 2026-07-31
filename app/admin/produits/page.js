@@ -25,7 +25,7 @@ export default async function Produits({ searchParams }) {
       {searchParams.ok && (
         <p className="form-ok" role="status">Modifications enregistrées.</p>
       )}
-      <form action={createProduct} className="card" encType="multipart/form-data">
+      <form action={createProduct} className="card">
         <h2 className="step-title">Nouveau modèle</h2>
         <div className="form-grid">
           <div className="field">
@@ -73,7 +73,7 @@ export default async function Produits({ searchParams }) {
         </button>
       </form>
       {products.map((p) => (
-        <form key={p.id} action={updateProduct} className="card" encType="multipart/form-data">
+        <form key={p.id} action={updateProduct} className="card">
           <input type="hidden" name="id" value={p.id} />
           <h2 className="step-title">
             {p.name}{" "}
