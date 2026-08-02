@@ -7,6 +7,7 @@ import AcStage from "./AcStage";
 import ScrollVideo from "./ScrollVideo";
 import AcLabels from "./AcLabels";
 import SurveyModal from "./SurveyModal";
+import { PRE_LANCEMENT } from "../lib/legal";
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -74,7 +75,11 @@ export default async function Home() {
       )}
       <section id="hero" className="hero bleed">
         <div className="hero-inner bleed-inner">
-          <span className="eyebrow">Paris · Livraison en 24h</span>
+          {PRE_LANCEMENT ? (
+            <span className="pre-lancement">Ouverture prochaine · Paris</span>
+          ) : (
+            <span className="eyebrow">Paris · Livraison en 24h</span>
+          )}
           <h1 className="hero-title">
             L&apos;été à Paris,
             <br />
@@ -88,8 +93,8 @@ export default async function Home() {
             <Link href="#modeles" className="btn btn-primary">
               Voir les climatiseurs
             </Link>
-            <Link href="#etapes" className="btn btn-ghost">
-              Comment ça marche
+            <Link href="/contact" className="btn btn-ghost">
+              Être prévenu du lancement
             </Link>
           </div>
           <div className="hero-facts">
@@ -171,10 +176,17 @@ export default async function Home() {
                       <span className="stock-ko">Indisponible actuellement</span>
                     )}
                   </p>
-                  {reservable && (
-                    <Link href={`/reserver/${p.slug}`} className="btn btn-primary">
-                      Réserver
-                    </Link>
+                  {PRE_LANCEMENT ? (
+                    <p className="muted">
+                      Réservation bientôt possible — laissez-nous votre email
+                      pour être prévenu.
+                    </p>
+                  ) : (
+                    reservable && (
+                      <Link href={`/reserver/${p.slug}`} className="btn btn-primary">
+                        Réserver
+                      </Link>
+                    )
                   )}
                 </div>
               </div>
@@ -202,9 +214,17 @@ export default async function Home() {
 
       <section id="cta" className="home-section bleed">
         <Reveal className="bleed-inner home-cta">
-          <h2 className="section-title">Prêt à retrouver la fraîcheur ?</h2>
-          <Link href="#modeles" className="btn btn-primary">
-            Voir les climatiseurs
+          <h2 className="section-title">
+            {PRE_LANCEMENT ? "Bientôt disponible à Paris" : "Prêt à retrouver la fraîcheur ?"}
+          </h2>
+          {PRE_LANCEMENT && (
+            <p className="muted" style={{ marginBottom: 18, maxWidth: "46ch", marginInline: "auto" }}>
+              Nous préparons le lancement. Laissez-nous votre email et vous
+              serez les premiers prévenus.
+            </p>
+          )}
+          <Link href={PRE_LANCEMENT ? "/contact" : "#modeles"} className="btn btn-primary">
+            {PRE_LANCEMENT ? "Nous écrire" : "Voir les climatiseurs"}
           </Link>
         </Reveal>
       </section>

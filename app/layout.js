@@ -25,7 +25,13 @@ export default function RootLayout({ children }) {
         </nav>
         <main>{children}</main>
         <footer>
-          LOOTACLIM · Location de climatiseurs mobiles · Paris & Île-de-France
+          <p>LOOTACLIM · Location de climatiseurs mobiles · Paris &amp; Île-de-France</p>
+          <nav className="footer-liens">
+            <Link href="/qui-sommes-nous">Qui sommes-nous</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/mentions-legales">Mentions légales</Link>
+            <Link href="/confidentialite">Confidentialité</Link>
+          </nav>
         </footer>
       </body>
     </html>

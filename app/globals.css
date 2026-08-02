@@ -819,3 +819,32 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
   .etiq-planche:last-child { page-break-after: auto; break-after: auto; }
   .etiquette { border: 1px solid #d8e2f2; }
 }
+
+/* ---- Pages légales ---- */
+.legal section { margin-bottom: clamp(26px, 4vh, 40px); }
+.legal h2 { font-size: clamp(19px, 2.4vw, 24px); margin-bottom: 12px; }
+.legal h3 { font-size: 15px; margin: 20px 0 8px; color: var(--deep); }
+.legal p { color: var(--muted); line-height: 1.75; font-size: 15px; margin-bottom: 12px; }
+.legal strong { color: var(--navy); }
+.legal ul { margin: 0 0 14px 20px; }
+.legal li { color: var(--muted); line-height: 1.75; font-size: 15px; margin-bottom: 5px; }
+.legal a { color: var(--deep); }
+.legal-avis {
+  background: #fff0e0; border: 1px solid rgba(199, 107, 46, 0.3);
+  border-radius: 14px; padding: 16px 18px;
+  color: #8a4a1e; font-size: 14.5px; line-height: 1.7;
+}
+.legal-avis strong { color: #6b3714; }
+
+.footer-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin-top: 12px; }
+.footer-liens a { color: var(--deep); text-decoration: none; font-size: 12.5px; font-weight: 600; }
+.footer-liens a:hover { text-decoration: underline; }
+
+/* Bandeau de pré-lancement : dit clairement que le service n'est pas ouvert. */
+.pre-lancement {
+  display: inline-block;
+  padding: 7px 18px; border-radius: 100px;
+  background: rgba(255, 240, 224, 0.9); border: 1px solid rgba(199, 107, 46, 0.35);
+  color: #8a4a1e; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+}
