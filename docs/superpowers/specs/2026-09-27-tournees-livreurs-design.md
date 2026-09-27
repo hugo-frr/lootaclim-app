@@ -112,26 +112,26 @@ model Address {
 
 // La tournée d'un livreur pour un jour donné.
 model Tour {
-  id         String     @id @default(cuid())
-  date       DateTime   // le jour, à minuit UTC comme Delivery.date
-  driver     User       @relation(fields: [driverId], references: [id])
-  driverId   String
-  status     String     @default("PLANNED") // PLANNED | STARTED | DONE
-  startedAt  DateTime?
-  distanceM  Int?       // pour l'affichage
-  durationS  Int?
-  geometry   String?    // tracé encodé, pour la carte
-  deliveries Delivery[]
+  id          String     @id @default(cuid())
+  date        DateTime   // le jour, à minuit UTC comme Delivery.date
+  driver      User       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driverId    String
+  status      String     @default("PLANNED") // PLANNED | STARTED (terminée = plus aucun arrêt à faire)
+  startedAt   DateTime?
+  conduiteMin Int?       // pour l'affichage
+  trace       String?    // tracé routier en JSON, pour la carte
+  createdAt   DateTime   @default(now())
+  deliveries  Delivery[]
 
   @@unique([date, driverId]) // un livreur, une tournée par jour
 }
 
 model Delivery {
   // …champs actuels
-  tour           Tour?     @relation(fields: [tourId], references: [id], onDelete: SetNull)
-  tourId         String?
-  stopOrder      Int?      // position dans la tournée
-  plannedArrival DateTime? // heure d'arrivée prévue
+  tour        Tour?   @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  tourId      String?
+  ordre       Int?    // position dans la tournée
+  heurePrevue Int?    // minutes depuis minuit, heure de Paris (évite les pièges de fuseau)
 }
 ```
 
