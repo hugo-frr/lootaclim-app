@@ -20,6 +20,9 @@ export default async function VueAdmin({ day }) {
     interventionsDuJour(day),
   ]);
   const nonPlacees = aFaire.filter((d) => !d.tourId);
+  // Un livreur parti ne reçoit plus d'arrêt : on ne le propose pas.
+  const partis = new Set(tours.filter((t) => t.status === "STARTED").map((t) => t.driverId));
+  const disponibles = livreurs.filter((l) => !partis.has(l.id));
   const avecTournee = new Set(tours.map((t) => t.driverId));
   const cocheParDefaut = (id) => (tours.length ? avecTournee.has(id) : true);
   const aujourdhui = nowInParis().day;
@@ -80,7 +83,7 @@ export default async function VueAdmin({ day }) {
                   : tours.length
                     ? "impossible à caser : créneau intenable ou véhicules pleins"
                     : "pas encore réparties"}
-                {livreurs.length > 0 && <MenuDonner d={d} day={day} livreurs={livreurs} />}
+                <MenuDonner d={d} day={day} livreurs={disponibles} />
               </li>
             ))}
           </ul>
@@ -116,7 +119,9 @@ export default async function VueAdmin({ day }) {
                         <br />
                         <span className="muted">{adresseTexte(d.booking.address)}</span>
                       </span>
-                      {d.status === "SCHEDULED" && <MenuDonner d={d} day={day} livreurs={livreurs.filter((l) => l.id !== t.driverId)} />}
+                      {d.status === "SCHEDULED" && t.status !== "STARTED" && (
+                        <MenuDonner d={d} day={day} livreurs={disponibles.filter((l) => l.id !== t.driverId)} />
+                      )}
                     </li>
                   ))}
                 </ol>

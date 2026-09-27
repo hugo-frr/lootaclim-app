@@ -64,7 +64,12 @@ export async function commencerTournee(formData) {
     await prisma.tour.update({ where: { id: tour.id }, data: { status: "STARTED", startedAt: new Date() } });
   }
   const depart = departValide(formData.get("lat"), formData.get("lng"));
-  await reordonnerTournee(tour.id, { depart });
+  const { complet } = await reordonnerTournee(tour.id, { depart });
+  if (!complet) {
+    return retour(day, {
+      erreur: "Certains créneaux ne pourront plus être tenus : l'ordre prévu est conservé. Prévenez les clients concernés.",
+    });
+  }
   retour(day, { info: depart ? "C'est parti ! Ordre recalculé depuis votre position." : "C'est parti !" });
 }
 
