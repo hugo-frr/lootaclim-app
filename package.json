@@ -10,6 +10,7 @@
     "test": "node --test lib/",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.js",
+    "db:demo-tournees": "node prisma/fausses-tournees.js",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
