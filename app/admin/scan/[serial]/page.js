@@ -5,6 +5,7 @@ import { UNIT_STATUS, BOOKING_STATUS } from "../../../../lib/constants";
 import { nextAction } from "../../../../lib/scan";
 import { assignUnit, markDelivery, saveUnit } from "../../actions";
 import AdminHeader from "../../AdminHeader";
+import AutoSaveForm from "../../AutoSaveForm";
 
 export const dynamic = "force-dynamic";
 
@@ -179,7 +180,7 @@ export default async function ScanPage({ params, searchParams }) {
 
       <div className="card">
         <strong className="survey-resultat-titre">État et note</strong>
-        <form action={saveUnit} className="scan-note">
+        <AutoSaveForm action={saveUnit} className="scan-note">
           <input type="hidden" name="id" value={unit.id} />
           <input type="hidden" name="retour" value={retour} />
           <div className="field">
@@ -194,8 +195,7 @@ export default async function ScanPage({ params, searchParams }) {
             <label htmlFor="notes">Note (rayure, panne, remarque…)</label>
             <textarea id="notes" name="notes" rows={2} defaultValue={unit.notes ?? ""} />
           </div>
-          <button type="submit" className="btn-small">Enregistrer</button>
-        </form>
+        </AutoSaveForm>
       </div>
 
       <div className="card">

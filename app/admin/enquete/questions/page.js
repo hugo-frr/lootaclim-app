@@ -4,6 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 import AdminHeader from "../../AdminHeader";
 import AddQuestionForm from "./AddQuestionForm";
 import AddChoiceForm from "./AddChoiceForm";
+import AutoSaveForm from "../../AutoSaveForm";
 import {
   addQuestion,
   updateQuestion,
@@ -86,7 +87,7 @@ export default async function QuestionsPage() {
             </div>
           </div>
 
-          <form action={updateQuestion} className="question-edition">
+          <AutoSaveForm action={updateQuestion} className="question-edition">
             <input type="hidden" name="id" value={q.id} />
             <div className="field">
               <label htmlFor={`label-${q.id}`}>Question</label>
@@ -100,8 +101,7 @@ export default async function QuestionsPage() {
               <input type="checkbox" name="required" defaultChecked={q.required} />
               Réponse obligatoire
             </label>
-            <button type="submit" className="btn-small">Enregistrer</button>
-          </form>
+          </AutoSaveForm>
 
           {q.type === "choice" && (
             <div className="question-choix">

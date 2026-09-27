@@ -107,6 +107,8 @@ body {
 h1, h2, h3 { font-family: "Jost", sans-serif; letter-spacing: -0.02em; }
 
 main { flex: 1; max-width: 1080px; width: 100%; margin: 0 auto; padding: var(--nav-offset) 24px 80px; }
+/* Back-office : les tableaux ont besoin de toute la largeur de l'écran. */
+main:has(.admin-header) { max-width: 1680px; }
 
 /* Navigation */
 .topnav {
@@ -259,6 +261,9 @@ footer { text-align: center; padding: 34px 20px; color: #8695ab; font-size: 13px
 .actions-cell form { display: flex; gap: 6px; align-items: center; }
 .actions-cell.actions-cell-stacked { flex-direction: column; align-items: flex-start; gap: 10px; }
 .actions-cell select, .actions-cell input { padding: 6px 8px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 8px; font-size: 12.5px; font-family: inherit; background: #fff; color: var(--navy); }
+.autosave-etat { font-size: 12.5px; color: #1a8c5b; min-height: 1em; }
+.autosave-etat:empty { display: none; }
+.autosave-etat.erreur { color: #c0392b; }
 .form-ok { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #d9f3e6; color: #1a8c5b; font-size: 13.5px; }
 .muted { color: #8695ab; font-size: 12.5px; font-weight: 400; }
 textarea { width: 100%; padding: 10px 12px; border: 1px solid rgba(107, 161, 238, 0.35); border-radius: 10px; font-size: 14px; font-family: inherit; background: #fff; color: var(--navy); resize: vertical; }

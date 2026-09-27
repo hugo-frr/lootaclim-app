@@ -10,6 +10,7 @@ import { toDay, addDays, nowInParis } from "../../lib/dates";
 import { unitAssignmentError, kitAssignmentError, depositDue } from "../../lib/transitions";
 import AdminHeader from "./AdminHeader";
 import ConfirmSubmit from "./ConfirmSubmit";
+import AutoSaveForm from "./AutoSaveForm";
 import {
   confirmBooking,
   cancelBooking,
@@ -203,7 +204,7 @@ export default async function Admin({ searchParams }) {
                         ))}
                       </select>
                     ) : b.status === "CONFIRMED" ? (
-                      <form action={assignUnit} className="actions-cell">
+                      <AutoSaveForm action={assignUnit} className="actions-cell">
                         <input type="hidden" name="bookingId" value={b.id} />
                         <select name="unitId" required defaultValue={b.unitId ?? ""}>
                           <option value="" disabled>Machine…</option>
@@ -211,8 +212,7 @@ export default async function Admin({ searchParams }) {
                             <option key={u.id} value={u.id}>{u.serialNumber}</option>
                           ))}
                         </select>
-                        <button type="submit" className="btn-small">{b.unitId ? "Modifier" : "Affecter"}</button>
-                      </form>
+                      </AutoSaveForm>
                     ) : b.unit ? (
                       `${b.unit.product.name} · ${b.unit.serialNumber}`
                     ) : (
@@ -234,7 +234,7 @@ export default async function Admin({ searchParams }) {
                         ))}
                       </select>
                     ) : b.status === "CONFIRMED" ? (
-                      <form action={assignKit} className="actions-cell">
+                      <AutoSaveForm action={assignKit} className="actions-cell">
                         <input type="hidden" name="bookingId" value={b.id} />
                         <select name="kitId" required defaultValue={b.kitId ?? ""}>
                           <option value="" disabled>Kit…</option>
@@ -242,8 +242,7 @@ export default async function Admin({ searchParams }) {
                             <option key={k.id} value={k.id}>{k.serialNumber}</option>
                           ))}
                         </select>
-                        <button type="submit" className="btn-small">{b.kitId ? "Modifier" : "Affecter"}</button>
-                      </form>
+                      </AutoSaveForm>
                     ) : b.kitId ? (
                       b.kit.serialNumber
                     ) : (
@@ -299,20 +298,11 @@ export default async function Admin({ searchParams }) {
                       <span className="booking-next">Caution à poser le {dateFr(depositDueDay)}</span>
                     )}
                     {b.status === "CONFIRMED" && readyToDeliver(b) && (
-                      <>
-                        <form action={markDelivery}>
-                          <input type="hidden" name="id" value={dropoff?.id} />
-                          <input type="hidden" name="resultat" value="DONE" />
-                          <button type="submit" className="btn-small">Marquer livrée</button>
-                        </form>
-                        <form action={markDelivery}>
-                          <input type="hidden" name="id" value={dropoff?.id} />
-                          <input type="hidden" name="resultat" value="FAILED" />
-                          <ConfirmSubmit className="btn-small btn-danger" message="Marquer cette livraison en échec ?">
-                            Échec
-                          </ConfirmSubmit>
-                        </form>
-                      </>
+                      <form action={markDelivery}>
+                        <input type="hidden" name="id" value={dropoff?.id} />
+                        <input type="hidden" name="resultat" value="DONE" />
+                        <button type="submit" className="btn-small">Marquer livrée</button>
+                      </form>
                     )}
                     {b.status === "CONFIRMED" && (
                       <form action={cancelBooking}>
@@ -324,20 +314,11 @@ export default async function Admin({ searchParams }) {
                     )}
 
                     {b.status === "DELIVERED" && (
-                      <>
-                        <form action={markDelivery}>
-                          <input type="hidden" name="id" value={pickup?.id} />
-                          <input type="hidden" name="resultat" value="DONE" />
-                          <button type="submit" className="btn-small">Marquer reprise</button>
-                        </form>
-                        <form action={markDelivery}>
-                          <input type="hidden" name="id" value={pickup?.id} />
-                          <input type="hidden" name="resultat" value="FAILED" />
-                          <ConfirmSubmit className="btn-small btn-danger" message="Marquer cette reprise en échec ?">
-                            Échec
-                          </ConfirmSubmit>
-                        </form>
-                      </>
+                      <form action={markDelivery}>
+                        <input type="hidden" name="id" value={pickup?.id} />
+                        <input type="hidden" name="resultat" value="DONE" />
+                        <button type="submit" className="btn-small">Marquer reprise</button>
+                      </form>
                     )}
 
                     {b.status === "RETURNED" && b.depositStatus === "HELD" && (
@@ -398,7 +379,7 @@ export default async function Admin({ searchParams }) {
                 <td><span className={`pill ${u.status}`}>{UNIT_STATUS[u.status]}</span></td>
                 <td>
                   {MANUAL_STATUSES.includes(u.status) ? (
-                    <form action={saveUnit} className="actions-cell">
+                    <AutoSaveForm action={saveUnit} className="actions-cell">
                       <input type="hidden" name="id" value={u.id} />
                       <select name="statut" defaultValue={u.status}>
                         {MANUAL_STATUSES.map((s) => (
@@ -406,8 +387,7 @@ export default async function Admin({ searchParams }) {
                         ))}
                       </select>
                       <input name="notes" defaultValue={u.notes ?? ""} placeholder="Notes…" maxLength={500} />
-                      <button type="submit" className="btn-small">Enregistrer</button>
-                    </form>
+                    </AutoSaveForm>
                   ) : (
                     <span className="muted">piloté par les livraisons (reprise à marquer)</span>
                   )}
@@ -436,7 +416,7 @@ export default async function Admin({ searchParams }) {
                 <td><span className={`pill ${k.status}`}>{KIT_STATUS[k.status]}</span></td>
                 <td>
                   {MANUAL_STATUSES.includes(k.status) ? (
-                    <form action={saveKit} className="actions-cell">
+                    <AutoSaveForm action={saveKit} className="actions-cell">
                       <input type="hidden" name="id" value={k.id} />
                       <select name="statut" defaultValue={k.status}>
                         {MANUAL_STATUSES.map((s) => (
@@ -444,8 +424,7 @@ export default async function Admin({ searchParams }) {
                         ))}
                       </select>
                       <input name="notes" defaultValue={k.notes ?? ""} placeholder="Notes…" maxLength={500} />
-                      <button type="submit" className="btn-small">Enregistrer</button>
-                    </form>
+                    </AutoSaveForm>
                   ) : (
                     <span className="muted">piloté par les livraisons (reprise à marquer)</span>
                   )}
