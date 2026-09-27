@@ -1132,7 +1132,8 @@ test("position du téléphone : seulement si elle est plausible", () => {
 // Google Maps accepte 9 étapes + la destination par lien.
 const ARRETS_PAR_LIEN = 10;
 
-const coord = ({ lat, lng }) => `${lat},${lng}`;
+// 6 décimales : une dizaine de centimètres, largement assez pour un GPS.
+const coord = ({ lat, lng }) => `${+lat.toFixed(6)},${+lng.toFixed(6)}`;
 
 export function lienGuidage(appli, point) {
   if (appli === "waze") {
