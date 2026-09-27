@@ -422,7 +422,7 @@ test("un créneau intenable est signalé, jamais forcé", () => {
   const res = resoudre({ arrets, vehicules: [vehicule("v1")], temps });
   assert.equal(res.tournees[0].arrets.length, 0);
   assert.equal(res.nonCases.length, 1);
-  assert.match(res.nonCases[0].raison, /créneau/);
+  assert.match(res.nonCases[0].raison, /créneau/i);
 });
 
 test("trop d'arrêts pour les véhicules : signalé comme manque de place", () => {
