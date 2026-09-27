@@ -83,7 +83,7 @@ dans Paris est posée dans la configuration, clairement marquée à remplacer.
 | Temps de trajet entre arrêts | **OpenRouteService** (clé gratuite) | De vrais temps de conduite sur le réseau routier. Offre gratuite largement suffisante |
 | Tracé du trajet sur la carte | OpenRouteService | Même service |
 | Affichage de la carte | **MapLibre** + fonds **OpenFreeMap** | Carte moderne et fluide sur téléphone, gratuite, sans clé, sans traçage publicitaire |
-| Guidage GPS vocal | **Waze** (bouton), Google Maps en second choix | Waze est le meilleur à Paris pour le trafic en temps réel. Inutile de réinventer le guidage |
+| Guidage GPS vocal | **Google Maps ou Waze**, au choix du livreur | Les deux gèrent le trafic en temps réel et continuent écran verrouillé. Inutile de réinventer le guidage |
 
 **Sans clé OpenRouteService**, tout fonctionne quand même : les temps de
 trajet sont estimés à vol d'oiseau (× 1,4 pour les détours, 18 km/h de moyenne
@@ -183,7 +183,21 @@ Pensé d'abord pour le téléphone, tenu d'une main :
    réordonner ses arrêts restants à partir de là où il est vraiment. Sans
    autorisation, on part de l'entrepôt.
 4. L'arrêt en cours est mis en avant, avec deux gros boutons : **« Y aller »**
-   (ouvre Waze) et **« Livrée »** / **« Récupérée »**.
+   et **« Livrée »** / **« Récupérée »**.
+   - « Y aller » ouvre le guidage vocal dans l'application choisie par le
+     livreur : **Google Maps** ou **Waze**. Le choix se fait une fois, en haut
+     de la page, et reste mémorisé sur son téléphone.
+   - Un bouton **« Toute la tournée dans Google Maps »** ouvre les arrêts
+     restants, dans l'ordre calculé, comme étapes d'un seul trajet. Google
+     Maps accepte au plus 9 étapes plus la destination par lien : au-delà de
+     10 arrêts, la tournée est découpée en tronçons (« arrêts 1 à 10 »,
+     « 11 à 20 »…). Waze ne sait pas enchaîner plusieurs étapes, d'où ce
+     bouton réservé à Google Maps.
+
+   Le guidage lui-même n'est volontairement pas refait dans l'application :
+   un site web perd la position GPS dès que l'écran se verrouille, alors que
+   Google Maps et Waze continuent de guider en arrière-plan, avec le trafic.
+   L'application sert de feuille de route ; le GPS guide.
 5. Marquer un arrêt passe au suivant et met la carte à jour.
 
 Marquer livrée passe par l'action existante `markDelivery`, avec toutes ses
