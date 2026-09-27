@@ -6,6 +6,7 @@ export default function AdminHeader() {
   return (
     <div className="admin-header">
       <Link href="/admin">Tableau de bord</Link>
+      <Link href="/admin/tournees">Tournées</Link>
       <Link href="/admin/produits">Modèles &amp; prix</Link>
       <Link href="/admin/enquete">Enquête de marché</Link>
       <Link href="/admin/etiquettes">Étiquettes</Link>

@@ -853,3 +853,44 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
   color: #8a4a1e; font-size: 12px; font-weight: 600;
   letter-spacing: 0.16em; text-transform: uppercase;
 }
+
+/* ---- Tournées des livreurs ---- */
+.form-info { background: #e8f5ec; color: #14532d; border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.stack-sm { display: flex; flex-direction: column; gap: 12px; }
+.tournees-jours { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 14px; margin-top: 6px; }
+.tournees-jours a { color: var(--deep); font-weight: 600; }
+.tournees-livreurs { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.case { display: inline-flex; gap: 8px; align-items: center; font-size: 15px; cursor: pointer; }
+.tournees-alerte { border: 2px solid var(--sun); }
+.tournees-alerte ul { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.carte-tournees { width: 100%; height: 520px; border-radius: 16px; overflow: hidden; background: var(--ice); }
+.carte-pastille { width: 26px; height: 26px; border-radius: 50%; color: #fff; font: 700 12px/26px "Inter", sans-serif; text-align: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(5, 18, 46, .35); cursor: pointer; }
+.carte-pastille.fait { opacity: .75; }
+.tournees-colonnes { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.tournee-colonne { border-top: 6px solid var(--cool); }
+.tournee-arrets { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; font-size: 14px; }
+.tournee-arrets li { display: grid; grid-template-columns: 52px 1fr; gap: 4px 10px; padding-bottom: 10px; border-bottom: 1px solid var(--ice); }
+.tournee-arrets li.fait { opacity: .5; }
+.tournee-heure { font-weight: 700; color: var(--deep); }
+.tournee-donner { grid-column: 2; }
+@media (max-width: 700px) {
+  .carte-tournees { height: 340px; }
+}
+.choix-appli { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.choix-appli button { border: 1.5px solid var(--frost); background: #fff; color: var(--navy); border-radius: 100px; padding: 6px 14px; font-weight: 600; cursor: pointer; }
+.choix-appli button.actif { background: var(--navy); border-color: var(--navy); color: #fff; }
+.livreur-liens { display: flex; flex-wrap: wrap; gap: 10px; }
+.livreur-arrets { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.livreur-arret { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.livreur-arret.actif { outline: 3px solid var(--cool); }
+.livreur-arret.fait { opacity: .55; }
+.livreur-arret-tete { display: flex; gap: 12px; align-items: center; }
+.livreur-arret-tete .pill { margin-left: auto; }
+.livreur-numero { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 700; display: grid; place-items: center; }
+.livreur-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.livreur-actions form, .livreur-actions .btn { width: 100%; }
+.livreur-actions .btn { text-align: center; padding-top: 14px; padding-bottom: 14px; }
+.btn-secondary { background: #fff; color: var(--navy); border: 1.5px solid var(--frost); }
+.btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(46, 95, 168, 0.14); }
+.btn-large { width: 100%; padding: 18px 30px; font-size: 17px; }
+.livreur-entete .eyebrow a { color: inherit; }
