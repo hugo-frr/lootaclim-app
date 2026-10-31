@@ -193,13 +193,20 @@ Page **`/admin/tournees`** (c'est là qu'arrive un livreur qui se connecte).
   l'ordre depuis sa position), « Y aller » ouvre Google Maps ou Waze,
   « Livrée » / « Récupérée » passe à l'arrêt suivant.
 
-**Tester avec de fausses commandes** (30 vraies adresses à Paris et autour,
-aujourd'hui et demain, 3 livreurs de test) :
+**Tester avec de fausses commandes** (45 vraies adresses à Paris et autour,
+locations de 1 à 14 jours, 3 livreurs de test avec leurs jours de repos,
+tournées déjà calculées pour chaque jour) :
 
 ```bash
-npm run db:demo-tournees              # crée (ou recrée) les données de test
-npm run db:demo-tournees -- --effacer # les retire toutes
+npm run db:demo-tournees                      # une semaine à partir d'aujourd'hui
+npm run db:demo-tournees -- --mois            # un mois (30 jours)
+npm run db:demo-tournees -- --jours=14        # un nombre de jours au choix
+npm run db:demo-tournees -- --sans-planifier  # sans calculer les tournées
+npm run db:demo-tournees -- --effacer         # les retire toutes
 ```
+
+Jours de travail : Karim du lundi au samedi, Léa du lundi au vendredi, Mehdi
+du mercredi au dimanche.
 
 Le script affiche les emails et le mot de passe des livreurs de test. Il refuse
 de tourner sur une base qui ressemble à la production, et ne touche qu'à ce
