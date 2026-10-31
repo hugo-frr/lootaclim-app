@@ -1,15 +1,13 @@
 import { prisma } from "../../../lib/prisma";
 import { addDays, nowInParis } from "../../../lib/dates";
 import { FLOOR_LABELS } from "../../../lib/constants";
-import { ENTREPOT, COULEURS_TOURNEES } from "../../../lib/tournees/config";
 import { heureTexte } from "../../../lib/tournees/arrets";
 import { liensTournee } from "../../../lib/tournees/navigation";
 import { DETAILS_INTERVENTION } from "../../../lib/tournees/planification";
-import CarteTournees from "./CarteTournees";
 import CommencerTournee from "./CommencerTournee";
 import { ChoixAppli, LienGuidage } from "./Guidage";
 import { marquerArret } from "./actions";
-import { adresseTexte, pointsDeTournee, dateLongue } from "./donnees";
+import { adresseTexte, dateLongue } from "./donnees";
 
 export default async function VueLivreur({ user, day }) {
   const aujourdhui = nowInParis().day;
@@ -44,6 +42,7 @@ export default async function VueLivreur({ user, day }) {
   const pointsRestants = restants
     .filter((d) => d.booking.address.lat != null)
     .map((d) => ({ lat: d.booking.address.lat, lng: d.booking.address.lng }));
+  const liens = liensTournee(pointsRestants);
 
   return (
     <>
@@ -59,27 +58,18 @@ export default async function VueLivreur({ user, day }) {
 
       {tour.status === "PLANNED" && day === aujourdhui && <CommencerTournee tourId={tour.id} />}
 
-      <ChoixAppli />
-      <CarteTournees
-        entrepot={ENTREPOT}
-        tournees={[{
-          couleur: COULEURS_TOURNEES[0],
-          trace: tour.trace ? JSON.parse(tour.trace) : null,
-          points: pointsDeTournee(tour.deliveries),
-        }]}
-      />
-
       {pointsRestants.length > 1 && (
         <div className="livreur-liens">
-          {liensTournee(pointsRestants).map((l) => (
-            <a key={l.de} href={l.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
-              {liensTournee(pointsRestants).length > 1
-                ? `Arrêts ${l.de} à ${l.a} dans Google Maps`
-                : "Toute la tournée dans Google Maps"}
+          {liens.map((l) => (
+            <a key={l.de} href={l.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              {liens.length > 1
+                ? `Guidage des arrêts ${l.de} à ${l.a} dans Google Maps`
+                : "Lancer le guidage de la tournée dans Google Maps"}
             </a>
           ))}
         </div>
       )}
+      <ChoixAppli />
 
       {!enCours && (
         <div className="card livreur-fini">

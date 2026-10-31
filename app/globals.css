@@ -248,7 +248,7 @@ footer { text-align: center; padding: 34px 20px; color: #8695ab; font-size: 13px
 }
 
 /* ---- Back-office (étape 3) ---- */
-.admin-header { display: flex; gap: 18px; align-items: center; font-size: 14px; }
+.admin-header { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 14px; }
 .admin-header a { color: var(--deep); text-decoration: none; font-weight: 600; }
 .admin-header a:hover { text-decoration: underline; }
 .admin-header form { margin-left: auto; }
@@ -894,3 +894,10 @@ textarea:focus { outline: 2px solid var(--deep); border-color: transparent; }
 .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(46, 95, 168, 0.14); }
 .btn-large { width: 100%; padding: 18px 30px; font-size: 17px; }
 .livreur-entete .eyebrow a { color: inherit; }
+/* Au téléphone : moins de marges, gros boutons pleine largeur faciles à toucher. */
+@media (max-width: 560px) {
+  .livreur-entete .section-title { margin-bottom: 10px; }
+  .livreur-liens .btn { width: 100%; text-align: center; }
+  .livreur-arret { padding: 18px; border-radius: 18px; }
+  .livreur-actions .btn { padding-left: 12px; padding-right: 12px; }
+}
