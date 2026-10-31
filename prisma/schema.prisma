@@ -91,6 +91,7 @@ model User {
   createdAt    DateTime  @default(now())
 
   events UnitEvent[]
+  tours  Tour[]
 
   @@index([email])
 }
@@ -124,6 +125,10 @@ model Address {
   city       String
   floor      String    @default("rdc") // "rdc" | "asc" | "esc"
   accessCode String?
+  // Coordonnées GPS, remplies par le géocodage (lib/geocodage.js). Nulles
+  // tant qu'il n'a pas réussi : l'adresse n'entre alors dans aucune tournée.
+  lat        Float?
+  lng        Float?
   customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId String
   bookings   Booking[]
@@ -177,6 +182,31 @@ model Delivery {
   proofUrl  String? // photo/signature (plus tard)
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   bookingId String
+  // Tournée du livreur qui fera l'intervention, et sa place dans l'ordre.
+  tour        Tour?   @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  tourId      String?
+  ordre       Int?
+  heurePrevue Int? // minutes depuis minuit, heure de Paris : 750 = 12 h 30
+
+  @@index([date])
+}
+
+// La tournée d'un livreur pour un jour. Une seule par livreur et par jour.
+model Tour {
+  id          String     @id @default(cuid())
+  date        DateTime // le jour, à minuit UTC comme Delivery.date
+  driver      User       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driverId    String
+  // PLANNED : l'admin peut la recalculer. STARTED : le livreur est parti,
+  // plus personne d'autre que lui n'y touche.
+  status      String     @default("PLANNED")
+  startedAt   DateTime?
+  conduiteMin Int?
+  trace       String? // tracé routier en JSON [[lng, lat], …], null sans OpenRouteService
+  createdAt   DateTime   @default(now())
+  deliveries  Delivery[]
+
+  @@unique([date, driverId])
 }
 
 // ---- Enquête de marché ----

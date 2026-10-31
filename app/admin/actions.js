@@ -35,6 +35,16 @@ function finish(path, error) {
   redirect(error ? `${path}?erreur=${encodeURIComponent(error)}` : path);
 }
 
+// Variante pour les formulaires à sauvegarde automatique (champ auto=1) : on
+// renvoie l'erreur au lieu de rediriger, sinon la page remonterait en haut à
+// chaque modification.
+function finishAuto(formData, path, error) {
+  if (formData.get("auto") !== "1") return finish(path, error);
+  revalidatePath("/admin");
+  revalidatePath(path);
+  return { error };
+}
+
 // Page où revenir après l'action. La page de scan s'en sert pour rester sur la
 // machine au lieu de renvoyer au tableau.
 // Seuls les chemins du back-office sont acceptés : sans ce filtre, un champ de
@@ -215,7 +225,7 @@ export async function assignUnit(formData) {
     },
     { isolationLevel: "Serializable" }
   );
-  finish(retourDe(formData), error);
+  return finishAuto(formData, retourDe(formData), error);
 }
 
 export async function markDelivery(formData) {
@@ -309,7 +319,7 @@ export async function saveUnit(formData) {
       });
     }
   });
-  finish(retourDe(formData), error);
+  return finishAuto(formData, retourDe(formData), error);
 }
 
 export async function updateProduct(formData) {
@@ -374,6 +384,7 @@ export async function updateProduct(formData) {
   }
   revalidatePath("/admin/produits");
   revalidatePath("/");
+  if (formData.get("auto") === "1") return { error };
   redirect(error ? `/admin/produits?erreur=${encodeURIComponent(error)}` : "/admin/produits?ok=1");
 }
 
@@ -566,7 +577,7 @@ export async function saveKit(formData) {
     if (error) return;
     await tx.kit.update({ where: { id }, data: { status: statut, notes: notes || null } });
   });
-  finish("/admin", error);
+  return finishAuto(formData, "/admin", error);
 }
 
 export async function assignKit(formData) {
@@ -601,5 +612,5 @@ export async function assignKit(formData) {
     },
     { isolationLevel: "Serializable" }
   );
-  finish("/admin", error);
+  return finishAuto(formData, "/admin", error);
 }
