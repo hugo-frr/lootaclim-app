@@ -8,6 +8,29 @@ import ScrollVideo from "./ScrollVideo";
 import AcLabels from "./AcLabels";
 import SurveyModal from "./SurveyModal";
 import { PRE_LANCEMENT } from "../lib/legal";
+import { FAQ_ACCUEIL } from "../lib/seo";
+import { eurosFr, faqLd, remplirTout, valeursDepuisProduits } from "../lib/seoGabarits";
+
+// Le prix d'appel du title suit la base (modèle le moins cher).
+export async function generateMetadata() {
+  const moinsCher = await prisma.product.findFirst({ where: { active: true }, orderBy: { dailyPrice: "asc" } });
+  const des = moinsCher ? ` dès ${eurosFr(moinsCher.dailyPrice)}€/j` : "";
+  return {
+    title: { absolute: `Location climatiseur Paris | Livré et installé en 24h${des} – Lootaclim` },
+    description: `Location de climatiseur mobile à Paris et petite couronne : livré et installé en 24h, sans travaux, sans engagement. 3 modèles${des ? ` dès ${eurosFr(moinsCher.dailyPrice)} €/jour` : ""}. Réservez.`,
+    alternates: { canonical: "/" },
+  };
+}
+
+// FAQ remplie avec les vrais prix ; vide si un modèle manque en base, pour ne
+// jamais afficher de valeur inventée.
+function faqAccueil(produits) {
+  try {
+    return remplirTout(FAQ_ACCUEIL, valeursDepuisProduits(produits));
+  } catch {
+    return [];
+  }
+}
 
 export const dynamic = "force-dynamic"; // stock des modèles toujours à jour
 
@@ -61,8 +84,16 @@ export default async function Home() {
     orderBy: { dailyPrice: "asc" },
   });
 
+  const faq = faqAccueil(products);
+
   return (
     <div>
+      {faq.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd(faq)).replace(/</g, "\\u003c") }}
+        />
+      )}
       <SurveyModal questions={surveyQuestions} />
       {/* Le fond doit rester au premier niveau de la page. Placé dans un
           <Reveal>, il serait confiné : un ancêtre porteur d'un transform
@@ -80,11 +111,12 @@ export default async function Home() {
           ) : (
             <span className="eyebrow">Paris · Livraison en 24h</span>
           )}
-          <h1 className="hero-title">
+          <h1 className="hero-h1">Location de climatiseur mobile à Paris · livré en 24h</h1>
+          <p className="hero-title">
             L&apos;été à Paris,
             <br />
             <span className="hero-accent">enfin frais.</span>
-          </h1>
+          </p>
           <p className="hero-sub">
             Louez un climatiseur mobile, livré et installé chez vous. Sans
             travaux, sans engagement, sans transpirer.
@@ -157,15 +189,24 @@ export default async function Home() {
             const photo = p.images[0];
             return (
               <div className={`model-row ${i % 2 === 1 ? "rev" : ""}`} key={p.id}>
-                <ModelPhoto url={photo?.url} alt={photo?.alt ?? `Climatiseur ${p.name}`} />
+                <ModelPhoto url={photo?.url} alt={photo?.alt ?? `Climatiseur mobile ${p.name} en location à Paris`} />
                 <div className="model-info">
-                  <h3>{p.name}</h3>
+                  <h3>
+                    <Link href={`/climatiseurs/${p.slug}`} className="model-lien">
+                      {p.name}
+                    </Link>
+                  </h3>
                   <div className="model-badges">
                     <span className="model-badge">Jusqu&apos;à {p.maxAreaM2} m²</span>
                     <span className="model-badge">{p.powerKw} kW</span>
                     <span className="model-badge">{p.noiseDb} dB</span>
                   </div>
-                  <p className="desc">{p.description}</p>
+                  <p className="desc">
+                    {p.description}{" "}
+                    <Link href={`/climatiseurs/${p.slug}`} className="about-link">
+                      Fiche complète
+                    </Link>
+                  </p>
                   <div className="price">
                     {euros(p.dailyPrice)} <small>/ jour</small>
                   </div>
@@ -194,6 +235,26 @@ export default async function Home() {
           })}
         </Reveal>
       </section>
+
+      {faq.length > 0 && (
+        <section id="faq" className="home-section">
+          <Reveal className="bleed-inner home-faq">
+            <span className="eyebrow">Questions fréquentes</span>
+            <h2 className="section-title">Louer un climatiseur à Paris, en bref</h2>
+            {faq.map((f) => (
+              <div className="home-faq-item" key={f.q}>
+                <h3>{f.q}</h3>
+                <p>{f.r}</p>
+              </div>
+            ))}
+            <p>
+              <Link href="/faq" className="about-link">
+                Toutes les questions
+              </Link>
+            </p>
+          </Reveal>
+        </section>
+      )}
 
       </div>
 

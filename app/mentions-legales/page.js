@@ -4,6 +4,7 @@ import { SITE, HEBERGEUR, PRE_LANCEMENT } from "../../lib/legal";
 export const metadata = {
   title: "Mentions légales — LOOTACLIM",
   description: "Éditeur, hébergeur et statut du site LOOTACLIM.",
+  alternates: { canonical: "/mentions-legales" },
 };
 
 export default function MentionsLegales() {

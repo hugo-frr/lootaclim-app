@@ -152,6 +152,28 @@ d'email est simplement ignoré (un message s'affiche dans le terminal en cas
 d'erreur d'envoi, mais la réservation du client n'est jamais bloquée par un
 problème d'email).
 
+## 🔎 Référencement (SEO)
+
+Travail de Romain (« Le SEO de A à Z », novembre 2026), intégré dans le code :
+
+- **29 pages de contenu** (tarifs, modèles, zones, villes, conseils) servies par
+  un seul gabarit : `app/[...chemin]/page.js` + `app/SeoPage.js`.
+- **Les textes** sont dans `lib/seoContenus.js`. Les prix, surfaces, puissances
+  et cautions n'y sont jamais écrits en dur : des repères comme `{seine.prix}`
+  sont remplis avec la base. Changer un prix dans `/admin/produits` met donc
+  toutes les pages à jour.
+- **Ajouter une page** (ex. une nouvelle ville) : ajouter un objet à
+  `PAGES_SEO` dans `lib/seoContenus.js`. Elle apparaît dans le site, le
+  sitemap et les tests (`npm test` vérifie balises, liens et repères).
+- `/sitemap.xml` et `/robots.txt` sont générés automatiquement
+  (`app/sitemap.js`, `app/robots.js`, réglages dans `lib/seo.js`).
+- Le back-office et le tunnel de réservation sont exclus de Google (`noindex`).
+
+**Après la mise en ligne** : déclarer le site dans
+[Google Search Console](https://search.google.com/search-console), soumettre
+`https://www.lootaclim.fr/sitemap.xml`, demander l'indexation des pages
+principales, puis suivre chaque mois clics, impressions et requêtes.
+
 ## 📁 Structure du projet
 
 ```

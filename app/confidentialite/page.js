@@ -5,6 +5,7 @@ export const metadata = {
   title: "Politique de confidentialité — LOOTACLIM",
   description:
     "Quelles données LOOTACLIM collecte, pourquoi, combien de temps, et comment exercer vos droits.",
+  alternates: { canonical: "/confidentialite" },
 };
 
 export default function Confidentialite() {
