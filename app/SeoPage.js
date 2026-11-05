@@ -8,6 +8,7 @@ import ModelPhoto from "./ModelPhoto";
 import { PRE_LANCEMENT } from "../lib/legal";
 import { discountRate } from "../lib/pricing";
 import { eurosFr, nombreFr, tableauPuissance } from "../lib/seoGabarits";
+import { slugify } from "../lib/slug";
 
 function JsonLd({ data }) {
   // « < » échappé : un texte de la base ne peut pas fermer la balise script.
@@ -130,117 +131,177 @@ function dateFr(iso) {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 }
 
+// Ancre d'un H2, pour le sommaire latéral.
+function ancre(texte) {
+  return slugify(texte).slice(0, 60);
+}
+
+function Cta({ produit, compact = false }) {
+  return (
+    <div className={compact ? "seo-cta seo-cta-compact" : "seo-cta"}>
+      {PRE_LANCEMENT ? (
+        <>
+          <p>
+            <strong>Ouverture prochaine à Paris.</strong>{" "}
+            {compact
+              ? "Les réservations ouvrent bientôt."
+              : "Les réservations ne sont pas encore ouvertes : écrivez-nous pour être prévenu du lancement."}
+          </p>
+          <Link href="/contact" className="btn btn-primary">
+            Être prévenu du lancement
+          </Link>
+        </>
+      ) : (
+        <>
+          <p>
+            <strong>Un climatiseur chez vous en 24h.</strong> Livré, installé, repris. Sans travaux.
+          </p>
+          <Link href={produit ? `/reserver/${produit.slug}` : "/climatiseurs"} className="btn btn-primary">
+            {produit ? `Réserver ${produit.name}` : "Choisir mon climatiseur"}
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function SeoPage({ page, fil, faq, produits, produit, voirAussi, articles, jsonLd }) {
+  const avecSommaire = page.sections.length >= 2;
   return (
     <article className="seo-page">
       {jsonLd.map((d, i) => (
         <JsonLd key={i} data={d} />
       ))}
 
-      <nav aria-label="Fil d'Ariane" className="seo-fil">
-        <ol>
-          {fil.map((e, i) => (
-            <li key={e.chemin}>
-              {i < fil.length - 1 ? <Link href={e.chemin}>{e.nom}</Link> : <span aria-current="page">{e.nom}</span>}
-            </li>
-          ))}
-        </ol>
-      </nav>
+      <header className={`seo-hero${produit ? " seo-hero-produit" : ""}`}>
+        <div className="seo-hero-texte">
+          <nav aria-label="Fil d'Ariane" className="seo-fil">
+            <ol>
+              {fil.map((e, i) => (
+                <li key={e.chemin}>
+                  {i < fil.length - 1 ? <Link href={e.chemin}>{e.nom}</Link> : <span aria-current="page">{e.nom}</span>}
+                </li>
+              ))}
+            </ol>
+          </nav>
+          <h1 className="page-title">{page.h1}</h1>
+          {page.type === "article" && (
+            <p className="seo-meta">
+              Par l&apos;équipe LOOTACLIM · Mis à jour le <time dateTime={page.date}>{dateFr(page.date)}</time>
+            </p>
+          )}
+          {page.intro && <p className="page-lead seo-intro">{page.intro}</p>}
+        </div>
 
-      <header className="seo-entete">
-        <h1 className="page-title">{page.h1}</h1>
-        {page.type === "article" && (
-          <p className="seo-meta">
-            Par l&apos;équipe LOOTACLIM · Mis à jour le <time dateTime={page.date}>{dateFr(page.date)}</time>
-          </p>
-        )}
-        {page.enBref && (
-          <div className="seo-enbref">
-            <strong>En bref :</strong> {page.enBref}
-          </div>
-        )}
-        {page.intro && <p className="page-lead seo-intro">{page.intro}</p>}
+        <div className="seo-hero-cote">
+          {produit && (
+            <div className="seo-produit">
+              <ModelPhoto
+                url={produit.images?.[0]?.url}
+                alt={produit.images?.[0]?.alt ?? `Climatiseur mobile ${produit.name}`}
+              />
+              <ul className="seo-chiffres">
+                <li><strong>{produit.maxAreaM2} m²</strong><span>surface max</span></li>
+                <li><strong>{nombreFr(produit.powerKw)} kW</strong><span>puissance</span></li>
+                <li><strong>{produit.noiseDb} dB</strong><span>niveau sonore</span></li>
+                <li><strong>{eurosFr(produit.dailyPrice)} €</strong><span>par jour</span></li>
+              </ul>
+            </div>
+          )}
+          {page.enBref && (
+            <div className="seo-enbref">
+              <span className="seo-enbref-titre">En bref</span>
+              <p>{page.enBref}</p>
+            </div>
+          )}
+        </div>
       </header>
 
-      {produit && (
-        <div className="seo-produit">
-          <ModelPhoto url={produit.images?.[0]?.url} alt={produit.images?.[0]?.alt ?? `Climatiseur mobile ${produit.name}`} />
-          <ul className="model-badges">
-            <li className="model-badge">Jusqu&apos;à {produit.maxAreaM2} m²</li>
-            <li className="model-badge">{nombreFr(produit.powerKw)} kW</li>
-            <li className="model-badge">{produit.noiseDb} dB</li>
-            <li className="model-badge">dès {eurosFr(produit.dailyPrice)} €/jour</li>
-          </ul>
+      {page.type === "blog" && (
+        <ul className="seo-articles">
+          {articles.map((a) => (
+            <li key={a.chemin}>
+              <Link href={a.chemin}>
+                <strong>{a.h1}</strong>
+                <span>{a.description}</span>
+                <em>Lire l&apos;article →</em>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {page.sections.length > 0 && (
+        <div className={avecSommaire ? "seo-corps" : "seo-corps seo-corps-seul"}>
+          <div className="seo-contenu">
+            {page.sections.map((s) => (
+              <section key={s.h2} id={ancre(s.h2)} className="seo-section">
+                <h2>{s.h2}</h2>
+                {s.p && <p>{s.p}</p>}
+                {s.tableau && <Tableau type={s.tableau} produits={produits} />}
+                {s.h3?.some((h) => h.tableau)
+                  ? s.h3.map((h) => (
+                      <div key={h.titre} className="seo-h3">
+                        <h3>{h.titre}</h3>
+                        {h.p && <p>{h.p}</p>}
+                        {h.tableau && <Tableau type={h.tableau} produits={produits} />}
+                        {h.lien && <Liens liens={[h.lien]} />}
+                      </div>
+                    ))
+                  : s.h3?.length > 0 && (
+                      <div className="seo-cartes">
+                        {s.h3.map((h) => (
+                          <div key={h.titre} className="seo-carte">
+                            <h3>{h.titre}</h3>
+                            {h.p && <p>{h.p}</p>}
+                            {h.lien && <Liens liens={[h.lien]} />}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                <Liens liens={s.liens} />
+              </section>
+            ))}
+          </div>
+
+          {avecSommaire && (
+            <aside className="seo-aside">
+              <nav aria-label="Sur cette page" className="seo-sommaire">
+                <span>Sur cette page</span>
+                <ol>
+                  {page.sections.map((s) => (
+                    <li key={s.h2}>
+                      <a href={`#${ancre(s.h2)}`}>{s.h2}</a>
+                    </li>
+                  ))}
+                  {!page.faqDepuisSections && faq.length > 0 && (
+                    <li>
+                      <a href="#questions-frequentes">Questions fréquentes</a>
+                    </li>
+                  )}
+                </ol>
+              </nav>
+              <Cta produit={produit} compact />
+            </aside>
+          )}
         </div>
       )}
 
-      {page.sections.map((s) => (
-        <section key={s.h2} className="seo-section">
-          <h2>{s.h2}</h2>
-          {s.p && <p>{s.p}</p>}
-          {s.tableau && <Tableau type={s.tableau} produits={produits} />}
-          {(s.h3 ?? []).map((h) => (
-            <div key={h.titre} className="seo-h3">
-              <h3>{h.titre}</h3>
-              {h.p && <p>{h.p}</p>}
-              {h.tableau && <Tableau type={h.tableau} produits={produits} />}
-              {h.lien && <Liens liens={[h.lien]} />}
-            </div>
-          ))}
-          <Liens liens={s.liens} />
-        </section>
-      ))}
-
-      {page.type === "blog" && (
-        <section className="seo-section">
-          <h2>Tous nos articles</h2>
-          <ul className="seo-articles">
-            {articles.map((a) => (
-              <li key={a.chemin}>
-                <Link href={a.chemin}>
-                  <strong>{a.h1}</strong>
-                  <span>{a.description}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
       {!page.faqDepuisSections && faq.length > 0 && (
-        <section className="seo-section seo-faq">
+        <section id="questions-frequentes" className="seo-faq">
           <h2>Questions fréquentes</h2>
-          {faq.map((f) => (
-            <div key={f.q} className="seo-h3">
-              <h3>{f.q}</h3>
-              <p>{f.r}</p>
-            </div>
-          ))}
+          <div className="seo-faq-grille">
+            {faq.map((f) => (
+              <div key={f.q} className="seo-carte">
+                <h3>{f.q}</h3>
+                <p>{f.r}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
-      <aside className="seo-cta">
-        {PRE_LANCEMENT ? (
-          <>
-            <p>
-              <strong>Ouverture prochaine à Paris.</strong> Les réservations ne sont pas encore ouvertes : écrivez-nous
-              pour être prévenu du lancement.
-            </p>
-            <Link href="/contact" className="btn btn-primary">
-              Être prévenu du lancement
-            </Link>
-          </>
-        ) : (
-          <>
-            <p>
-              <strong>Un climatiseur chez vous en 24h.</strong> Livré, installé, repris. Sans travaux.
-            </p>
-            <Link href={produit ? `/reserver/${produit.slug}` : "/climatiseurs"} className="btn btn-primary">
-              {produit ? `Réserver ${produit.name}` : "Choisir mon climatiseur"}
-            </Link>
-          </>
-        )}
-      </aside>
+      <Cta produit={produit} />
 
       {voirAussi.length > 0 && (
         <nav aria-label="À voir aussi" className="seo-voir-aussi">
@@ -248,7 +309,10 @@ export default function SeoPage({ page, fil, faq, produits, produit, voirAussi, 
           <ul>
             {voirAussi.map((v) => (
               <li key={v.chemin}>
-                <Link href={v.chemin}>{v.titre}</Link>
+                <Link href={v.chemin}>
+                  {v.titre}
+                  <span aria-hidden="true">→</span>
+                </Link>
               </li>
             ))}
           </ul>
