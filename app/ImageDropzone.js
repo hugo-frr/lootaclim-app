@@ -42,6 +42,9 @@ export default function ImageDropzone({ name, currentUrl, currentAlt }) {
         e.preventDefault();
         setDragOver(false);
         applyFiles(e.dataTransfer.files);
+        // Un fichier déposé ne déclenche pas d'événement « change » : on le
+        // signale nous-mêmes, pour les formulaires qui s'enregistrent seuls.
+        inputRef.current?.dispatchEvent(new Event("change", { bubbles: true }));
       }}
     >
       <input

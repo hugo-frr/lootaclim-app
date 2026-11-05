@@ -9,6 +9,7 @@ import { quote } from "../../../lib/pricing";
 import { nowInParis, addMonths, addDays, toDay } from "../../../lib/dates";
 import { createCheckoutSession, ensureStripeCustomer } from "../../../lib/stripe";
 import { kitAssignmentError, unitAssignmentError } from "../../../lib/transitions";
+import { geocoderAdresseParId } from "../../../lib/tournees/planification";
 
 // Nombre de tentatives en cas de conflit d'écriture strictement simultané
 // (collision de référence P2002, conflit de sérialisation P2034).
@@ -226,6 +227,10 @@ export async function createBooking(prevState, formData) {
   }
 
   const { booking, customer, product } = created;
+
+  // Coordonnées GPS pour les tournées, sans ralentir le client : pas
+  // d'await. Si ça échoue, le calcul des tournées réessaiera.
+  geocoderAdresseParId(booking.addressId);
 
   let session;
   try {

@@ -203,6 +203,50 @@ lootaclim-app/
 └── package.json          ← dépendances et commandes
 ```
 
+## 🚚 Tournées des livreurs
+
+Page **`/admin/tournees`** (c'est là qu'arrive un livreur qui se connecte).
+
+- **Admin** : choisir le jour, cocher les livreurs qui travaillent, cliquer
+  « Calculer les tournées ». L'application répartit les livraisons et reprises
+  entre eux, dans le meilleur ordre, en respectant les créneaux clients et la
+  place dans les véhicules. « Donner à… » passe un arrêt à un autre livreur.
+- **Livreur** : sa tournée sur une carte, « Commencer ma tournée » (recalcule
+  l'ordre depuis sa position), « Y aller » ouvre Google Maps ou Waze,
+  « Livrée » / « Récupérée » passe à l'arrêt suivant.
+
+**Tester avec de fausses commandes** (45 vraies adresses à Paris et autour,
+locations de 1 à 14 jours, 3 livreurs de test avec leurs jours de repos,
+tournées déjà calculées pour chaque jour) :
+
+```bash
+npm run db:demo-tournees                      # une semaine à partir d'aujourd'hui
+npm run db:demo-tournees -- --mois            # un mois (30 jours)
+npm run db:demo-tournees -- --jours=14        # un nombre de jours au choix
+npm run db:demo-tournees -- --sans-planifier  # sans calculer les tournées
+npm run db:demo-tournees -- --effacer         # les retire toutes
+```
+
+Jours de travail : Karim du lundi au samedi, Léa du lundi au vendredi, Mehdi
+du mercredi au dimanche.
+
+Le script affiche les emails et le mot de passe des livreurs de test. Il refuse
+de tourner sur une base qui ressemble à la production, et ne touche qu'à ce
+qu'il a créé (emails `@test.lootaclim.fr`, références `TEST-…`).
+
+**Réglages** dans `lib/tournees/config.js` : temps sur place, capacité d'un
+véhicule, horaires. ⚠️ **L'adresse de l'entrepôt y est provisoire** (12 rue de
+Rivoli) : à remplacer, coordonnées GPS comprises.
+
+**Temps de trajet réels (facultatif)** : créer une clé gratuite sur
+[openrouteservice.org](https://openrouteservice.org/dev/#/signup), la mettre
+dans `.env` (`ORS_API_KEY=…`) et dans les variables d'environnement Vercel.
+Sans clé, les temps sont estimés à vol d'oiseau et la carte relie les arrêts
+en pointillés : tout fonctionne, en un peu moins précis.
+
+**Limites connues** : un seul chargement par jour et par véhicule (6 machines),
+pas de suivi en direct des livreurs sur la carte admin.
+
 ## 🗺️ Feuille de route
 
 - [x] Étape 1 : fondations — base de données, catalogue, back-office (lecture)

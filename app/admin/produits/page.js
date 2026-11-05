@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { euros } from "../../../lib/constants";
 import AdminHeader from "../AdminHeader";
 import ImageDropzone from "../../ImageDropzone";
+import AutoSaveForm from "../AutoSaveForm";
 import { updateProduct, createProduct } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +80,7 @@ export default async function Produits({ searchParams }) {
         </button>
       </form>
       {products.map((p) => (
-        <form key={p.id} action={updateProduct} className="card">
+        <AutoSaveForm key={p.id} action={updateProduct} className="card">
           <input type="hidden" name="id" value={p.id} />
           <h2 className="step-title">
             {p.name}{" "}
@@ -128,6 +129,7 @@ export default async function Produits({ searchParams }) {
             <div className="field full">
               <label>Photo</label>
               <ImageDropzone
+                key={p.images[0]?.url ?? "aucune"}
                 name="image"
                 currentUrl={p.images[0]?.url}
                 currentAlt={p.images[0]?.alt}
@@ -140,10 +142,7 @@ export default async function Produits({ searchParams }) {
               )}
             </div>
           </div>
-          <button type="submit" className="btn btn-primary" style={{ marginTop: 14 }}>
-            Enregistrer {p.name}
-          </button>
-        </form>
+        </AutoSaveForm>
       ))}
       <p className="muted">
         Le nom et l&apos;adresse (slug) des modèles ne sont pas modifiables ici :
