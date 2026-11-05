@@ -2,7 +2,7 @@
 const nextConfig = {
   async redirects() {
     return [
-      { source: "/catalogue", destination: "/#modeles", permanent: true },
+      { source: "/catalogue", destination: "/climatiseurs", permanent: true },
     ];
   },
 };

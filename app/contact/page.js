@@ -2,8 +2,10 @@ import Link from "next/link";
 import { SITE, PRE_LANCEMENT } from "../../lib/legal";
 
 export const metadata = {
-  title: "Contact — LOOTACLIM",
-  description: "Nous écrire : questions, demandes concernant vos données, ou simple curiosité.",
+  title: "Contact Lootaclim : une question sur la location de climatiseur à Paris ?",
+  description:
+    "Une question sur la location de climatiseur mobile à Paris, la livraison ou vos données ? Écrivez-nous à contact@lootaclim.fr, réponse sous 24 heures.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function Contact() {

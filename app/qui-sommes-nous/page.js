@@ -3,9 +3,10 @@ import Reveal from "../Reveal";
 import ModelPhoto from "../ModelPhoto";
 
 export const metadata = {
-  title: "Qui sommes-nous — LOOTACLIM",
+  title: "Qui sommes-nous : trois étudiants parisiens derrière la clim Lootaclim",
   description:
-    "Trois étudiants, un studio de 20 m² sous la canicule, et une conviction : un climatiseur utilisé trente jours par an se loue, il ne s'achète pas.",
+    "Trois étudiants, un studio de 20 m² sous la canicule : pourquoi on a créé Lootaclim, la location de climatiseurs mobiles livrés et installés à Paris !",
+  alternates: { canonical: "/qui-sommes-nous" },
 };
 
 // Les trois temps du récit. Le contenu vient d'Hugo ; rien n'est inventé ici
